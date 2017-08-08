@@ -23,15 +23,20 @@ include("Kara.jl");using Kara
             moveable=true,
             turnable=true
         )
+        leaf = Actor_Definition(
+            passable=true
+        )
         wo = World(10,10)
         ac1 = actor_create!(wo,kara,Location(1,3),Orientation(Kara.DIRECTIONS[1]))
         @test ac1 == wo.actors[1]
         actor_delete!(wo,ac1)
         @test length(wo.actors) == 0
         ac2 = actor_create!(wo,kara,Location(1,3),Orientation(Kara.DIRECTIONS[1]))
-        ac3 = actor_create!(wo,kara,Location(1,3),Orientation(Kara.DIRECTIONS[1]))
+        ac3 = actor_create!(wo,leaf,Location(1,3),Orientation(Kara.DIRECTIONS[1]))
         @test length(get_actors_at_location(wo,Location(1,3))) == 2
         @test length(get_actors_at_location(wo,Location(2,3))) == 0
+        @test_throws ErrorException actor_create!(wo,kara,Location(1,3),
+                                                  Orientation(Kara.DIRECTIONS[1]))
     end
     @testset begin "World Boundaries"
         ka = Actor_Definition(
@@ -41,6 +46,9 @@ include("Kara.jl");using Kara
         wo = World(2,5)
         ac = actor_create!(
             wo,ka,Location(1,1),Orientation(Kara.DIRECTIONS[1])
+        )
+        @test_throws ErrorException actor_create!(
+            wo,ka,Location(1,10),Orientation(Kara.DIRECTIONS[1])
         )
         actor_move!(wo,ac,Kara.DIRECTIONS[1]) # 1,2
         actor_move!(wo,ac,Kara.DIRECTIONS[1]) # 1,3

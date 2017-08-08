@@ -108,6 +108,19 @@ struct World
 end
 
 function actor_create!(wo::World,a_def::Actor_Definition,lo::Location,or::Orientation)
+    # Check if actors already exist at this location
+    # One marke passable is ok
+    ac_at_lo = get_actors_at_location(wo,lo)
+    if length(ac_at_lo) > 1
+        error("Error: Can't place new actor at this location, too many actors.")
+    end
+    if length(ac_at_lo) == 1 && !ac_at_lo[1].actor_definition.passable && !a_def.passable
+        error("Error: Can't plane new actor at this location, actor not passable.")
+    end
+    # Check if the position is within the world
+    if !location_within_world(wo,lo)
+        error("Can't place new actor at this location, location is outside of this world")
+    end
     ac = Actor(a_def,lo,or)
     push!(wo.actors,ac)
     return ac
@@ -128,8 +141,12 @@ function actor_rotate!(ac::Actor,direction::Bool)
     ac.orientation = orientation_rotate(ac.orientation,Val{direction})
 end
 
+function location_within_world(wo::World,lo::Location)
+    lo.x > 0 && lo.x <= wo.size.width && lo.y > 0 && lo.y <= wo.size.height
+end
+
 function location_fix_ooBound(wo::World,lo::Location)
-    if lo.x > 0 && lo.x <= wo.size.width && lo.y > 0 && lo.y <= wo.size.height
+    if location_within_world(wo,lo)
         return lo
     else
         x = lo.x; y=lo.y
@@ -166,4 +183,6 @@ function actor_move!(wo::World,ac::Actor,direction::Symbol,parent::Bool=true)
     end
     ac.location = new_lo
 end
+
+
 end
