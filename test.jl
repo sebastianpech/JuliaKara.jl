@@ -1,4 +1,4 @@
-workspace() 
+workspace()
 using Base.Test
 include("Kara.jl");using Kara
 
@@ -88,5 +88,19 @@ include("Kara.jl");using Kara
         )
         @test_throws ErrorException actor_move!(wo,ac_kara_2,Kara.DIRECTIONS[1])
     end
-    
+    @testset "Putting and Picking" begin
+        wo = World(1,10)
+        leaf = Actor_Definition(
+            passable=true,
+            grabable=true
+        )
+        kara_p = Actor_Definition()
+        kara_ac = actor_create!(wo,kara_p,Location(1,1),Orientation(Kara.DIRECTIONS[1]))
+        actor_putdown!(wo,kara_ac,leaf)
+        @test wo.actors[2].actor_definition == leaf
+        actor_pickup!(wo,kara_ac)
+        @test length(wo.actors) == 1
+        @test_throws ErrorException actor_pickup!(wo,kara_ac)
+        @test_throws ErrorException actor_putdown!(wo,kara_ac,kara_p)
+    end
 end

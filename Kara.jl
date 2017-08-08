@@ -12,6 +12,8 @@ export
     actor_delete!,
     actor_rotate!,
     actor_move!,
+    actor_putdown!,
+    actor_pickup!,
     get_actors_at_location,
     location_move,
     location_fix_ooBound
@@ -296,5 +298,38 @@ function actor_move!(wo::World,ac::Actor,direction::Symbol,parent::Bool=true)
     ac.location = new_lo
 end
 
+
+"""
+    actor_pickup!(wo::World,ac::Actor)
+
+Remove an `grabable` actor from the same location `ac` is at.
+"""
+function actor_pickup!(wo::World,ac::Actor)
+    actrs = get_actors_at_location(wo,ac.location)
+    if length(actrs) == 1
+        error("There is nothing to pickup here.")
+    end
+    if length(actrs) > 2
+        error("The world is corrupt! There are more than 2 actors on one field")
+    end
+    filter!(a->a!=ac,actrs)
+    if !actrs[1].actor_definition.grabable
+        error("The actor is not grabable")
+    end
+    actor_delete!(wo,actrs[1])
+end
+
+"""
+    actor_putdown(wo::Word,ac::Actor,acd_put::Actor_Definition)
+
+Create an actor of type `acd_put` at `ac`'s location with `ac`'s orientation.
+Only works if `acd_put` has `grabable=true`.
+""" 
+function actor_putdown!(wo::World,ac::Actor,acd_put::Actor_Definition)
+    if !acd_put.grabable
+        error("The actor is not grabable")
+    end
+    actor_create!(wo,acd_put,ac.location,ac.orientation)
+end
 
 end
