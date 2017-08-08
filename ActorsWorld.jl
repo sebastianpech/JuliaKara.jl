@@ -1,4 +1,4 @@
-module Kara
+module ActorsWorld
 
 import Base.==
 export
@@ -97,7 +97,7 @@ function location_move(lo::Location,or::Orientation)
     elseif or.value == DIRECTIONS[3]
         return Location(lo.x,lo.y-1)
     else
-        return Location(lo.x+1,lo.y)
+        return Location(lo.x-1,lo.y)
     end
 end
 
