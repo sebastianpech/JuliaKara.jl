@@ -23,6 +23,12 @@ const DIRECTIONS = [
     :WEST
 ]
 
+"""
+    Orientation(value::Symbol)
+
+Defines a orientation. Possible values for `value` are
+defined in DIRECTIONS.
+"""
 struct Orientation
     value::Symbol
     Orientation(value) = begin
@@ -31,6 +37,13 @@ struct Orientation
     end
 end
 
+"""
+    orientation_rotate(or::Orientation,::Type{Val{bool}})
+
+Rotates a `Orientation` counter-clockwise for Val{false} and clockwise for
+Val{true}. Basically jumps to the next enty in `DIRECTIONS`. The last jumps
+to the first and the first to the last.
+"""
 function orientation_rotate(or::Orientation,::Type{Val{false}})
     if or.value == DIRECTIONS[1]
         return Orientation(DIRECTIONS[4])
@@ -59,11 +72,21 @@ function orientation_rotate(or::Orientation,::Type{Val{true}})
     end
 end
 
+"""
+    Location(x::Int,y::Int)
+
+Stores a location defined by x and y on a gridded space.
+"""
 struct Location
     x::Int
     y::Int
 end
 
+"""
+    location_move(lo::Location,or::Orientation)
+
+Moves one step into the direction defined by the Orientation `or`.
+"""
 function location_move(lo::Location,or::Orientation)
     if or.value == DIRECTIONS[1]
         return Location(lo.x,lo.y+1)
@@ -78,11 +101,27 @@ end
 
 ==(a::Location,b::Location) = a.x == b.x && a.y == b.y
 
+"""
+    Size(width::Int,height::Int)
+
+Stores the size of a grid.
+"""
 struct Size
     width::Int
     height::Int
 end
 
+"""
+    Actor_Definition(;<keyword arguments>)
+
+Defines the behavior and the constrains of a actor.
+
+# Argmuments
+- `moveable::Bool`: Defines the movement of this actor.
+- `turnable::Bool`: Defines the rotation of this actor.
+- `passable::Bool`: Defines if this actor can share a field with another actor
+- `grabable::Bool`: Defines if the actor can be picked-up and put-down
+"""
 struct Actor_Definition
     moveable::Bool
     turnable::Bool
@@ -94,19 +133,61 @@ struct Actor_Definition
                      grabable::Bool=false
                      ) = new(moveable,turnable,passable,grabable)
 end
+"""
+    Actor(actor_definition::Actor_Definition,location::Location,orientation::Orientation)
 
+Defines the actual actor which is placed on the world.
+
+# Examples
+The following creates an actor which can be moved and turned. It is placed at
+(0,0) in the world and looks north.
+
+```julia-repl
+julia> Actor(
+    Actor_Definition(moveable=true,turnable=true),
+    Location(0,0),
+    Orientation(:NORTH)
+)
+```
+"""
 mutable struct Actor
     actor_definition::Actor_Definition
     location::Location
     orientation::Orientation
 end
+"""
+    World(width::Int,height::Int)
 
+Creates a new world with a given height and a given width.
+"""
 struct World
     size::Size
     actors::Vector{Actor}
     World(width::Int,height::Int) = new(Size(width,height),Actor[])
 end
+"""
+    actor_create!(wo::World,a_def::Actor_Definition,lo::Location,or::Orientation)
 
+Creates a new actor defined by the actor definition `a_def` at Location `lo`,
+oriented in `or`. The actor is added to the world `wo`.
+
+The functions returns the newly generated actor, thus to enable interaction it
+should be stored.
+
+# Examples
+```julia-repl
+julia> wo = World(10,10)
+julia> adef = Actor_Definition(
+    moveable=true,
+    turnable=true
+)
+julia> ac_new = actor_create(
+    wo,adef,
+    Location(1,1),Orientation(:NORTH)
+)
+julia> actor_move!(wo,ac_new,:NORTH)
+```
+"""
 function actor_create!(wo::World,a_def::Actor_Definition,lo::Location,or::Orientation)
     # Check if actors already exist at this location
     # One marke passable is ok
@@ -125,26 +206,49 @@ function actor_create!(wo::World,a_def::Actor_Definition,lo::Location,or::Orient
     push!(wo.actors,ac)
     return ac
 end
+"""
+    actor_delete!(wo::World,ac::Actor)
 
+Delete the actor `ac` from the World `wo`.
+"""
 function actor_delete!(wo::World,ac::Actor)
     i = findnext(wo.actors,ac,1)
     i != 0 || error("Actor not in this world!")
     deleteat!(wo.actors,i)
 end
+"""
+    get_actors_at_location(wo::World,lo::Location)
 
+Return a list of actors at `lo`. If no actor is at `lo` return `[]`.
+"""
 function get_actors_at_location(wo::World,lo::Location)
     filter(a->a.location == lo,wo.actors)
 end
+"""
+    actor_rotate!(ac::Actor,direction::Bool)
 
+Rotate an actor `ac` by 1 step counter-clockwise for `false` and clockwise
+for `true`.
+"""
 function actor_rotate!(ac::Actor,direction::Bool)
     ac.actor_definition.turnable || error("Invalid Operation: Actor is not turnable")
     ac.orientation = orientation_rotate(ac.orientation,Val{direction})
 end
+"""
+    location_within_world(wo::World,lo::Location)
 
+Check if `lo` is within the bounds of the worlds size.
+"""
 function location_within_world(wo::World,lo::Location)
     lo.x > 0 && lo.x <= wo.size.width && lo.y > 0 && lo.y <= wo.size.height
 end
+"""
+    location_fix_ooBound(wo::World,lo::Location)
 
+Fix a location `lo` which is out of bounds of the worlds size.
+The fix is made such that when leaving the world at one end
+the world is entered at the opposit end.
+"""
 function location_fix_ooBound(wo::World,lo::Location)
     if location_within_world(wo,lo)
         return lo
@@ -163,7 +267,15 @@ function location_fix_ooBound(wo::World,lo::Location)
         return Location(x,y)
     end
 end
+"""
+    actor_move!(wo::World,ac::Actor,direction::Symbol[,parent::Bool])
 
+Move the actor `ac` one step in the direction `direction` with the world `wo`.
+The optional attribute `parent` should never be used directly as its purpos
+is to only allow the movemnt of one consecutive moveable actor.
+It actually stops the movement recursion by switching from true to false, which
+only allows one nested layer of recursion.
+"""
 function actor_move!(wo::World,ac::Actor,direction::Symbol,parent::Bool=true)
     ac.actor_definition.moveable || error("Invalid Operation: Actor is not moveable")
     new_lo = location_move(ac.location,Orientation(direction))
