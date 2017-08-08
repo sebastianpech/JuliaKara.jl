@@ -116,7 +116,7 @@ end
 """
     Actor_Definition(;<keyword arguments>)
 
-Defines the behavior and the constrains of a actor.
+Defines the behavior and the constraints of an actor.
 
 # Argmuments
 - `moveable::Bool`: Defines the movement of this actor.
@@ -195,10 +195,10 @@ function actor_create!(wo::World,a_def::Actor_Definition,lo::Location,or::Orient
     # One marke passable is ok
     ac_at_lo = get_actors_at_location(wo,lo)
     if length(ac_at_lo) > 1
-        error("Error: Can't place new actor at this location, too many actors.")
+        error("Can't place new actor at this location, too many actors.")
     end
     if length(ac_at_lo) == 1 && !ac_at_lo[1].actor_definition.passable && !a_def.passable
-        error("Error: Can't plane new actor at this location, actor not passable.")
+        error("Can't place new actor at this location, actor not passable.")
     end
     # Check if the position is within the world
     if !location_within_world(wo,lo)
@@ -286,13 +286,13 @@ function actor_move!(wo::World,ac::Actor,direction::Symbol,parent::Bool=true)
     for a in get_actors_at_location(wo,new_lo)
         if a.actor_definition.moveable && !a.actor_definition.passable
             if !parent
-                error("Error: Can't move more than one element")
+                error("Can't move more than one element")
             end
             actor_move!(wo,a,direction,false)
         elseif a.actor_definition.passable
             continue
         else
-            error("Error: Can't access field, actor is not passable")
+            error("Can't access field, actor is not passable")
         end
     end
     ac.location = new_lo
