@@ -20,7 +20,11 @@ export
     wrap_actor_move,
     wrap_actor_rotate,
     wrap_actor_putdown,
-    wrap_actor_pickup
+    wrap_actor_pickup,
+    actor_definition_at_location,
+    is_actor_definition_left,
+    is_actor_definition_right,
+    is_actor_definition_front
 
 const DIRECTIONS = [
     :NORTH,
@@ -230,6 +234,16 @@ Return a list of actors at `lo`. If no actor is at `lo` return `[]`.
 function get_actors_at_location(wo::World,lo::Location)
     filter(a->a.location == lo,wo.actors)
 end
+
+function actor_definition_at_location(wo::World,lo::Location,acd::Actor_Definition)
+    for ac in get_actors_at_location(wo,lo)
+        if ac.actor_definition == acd
+            return true
+        end
+    end
+    return false
+end
+
 """
     actor_rotate!(ac::Actor,direction::Bool)
 
@@ -336,6 +350,21 @@ function actor_putdown!(wo::World,ac::Actor,acd_put::Actor_Definition)
     actor_create!(wo,acd_put,ac.location,ac.orientation)
 end
 
+function is_actor_definition_left(wo::World,ac::Actor,acd::Actor_Definition)
+    lo_left = location_move(ac.location,orientation_rotate(ac.orientation,Val{false}))
+    return actor_definition_at_location(wo,lo_left,acd)
+end
+
+function is_actor_definition_right(wo::World,ac::Actor,acd::Actor_Definition)
+    lo_left = location_move(ac.location,orientation_rotate(ac.orientation,Val{true}))
+    return actor_definition_at_location(wo,lo_left,acd)
+end
+
+function is_actor_definition_front(wo::World,ac::Actor,acd::Actor_Definition)
+    lo_left = location_move(ac.location,ac.orientation)
+    return actor_definition_at_location(wo,lo_left,acd)
+end
+
 function wrap_actor_move(wo::World)
     function (ac::Actor)
         actor_move!(wo,ac,ac.orientation.value)
@@ -362,5 +391,6 @@ function wrap_actor_putdown(wo::World,acd_put::Actor_Definition)
         actor_putdown!(wo,ac,acd_put)
     end
 end
+
 
 end

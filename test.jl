@@ -103,4 +103,15 @@ include("ActorsWorld.jl");using ActorsWorld
         @test_throws ErrorException actor_pickup!(wo,kara_ac)
         @test_throws ErrorException actor_putdown!(wo,kara_ac,kara_p)
     end
+    @testset "Sensors" begin
+        wo = World(10,10)
+        acd = Actor_Definition()
+        ac = actor_create!(wo,acd,Location(5,5),Orientation(:NORTH))
+        actor_create!(wo,acd,Location(6,5),Orientation(:NORTH))
+        actor_create!(wo,acd,Location(5,6),Orientation(:NORTH))
+        @test is_actor_definition_left(wo,ac,acd) == false
+        @test is_actor_definition_right(wo,ac,acd) == true
+        @test is_actor_definition_front(wo,ac,acd) == true
+        @test is_actor_definition_right(wo,ac,Actor_Definition(moveable=true)) == false
+    end
 end
