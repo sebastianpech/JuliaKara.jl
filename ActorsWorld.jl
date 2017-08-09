@@ -16,7 +16,11 @@ export
     actor_pickup!,
     get_actors_at_location,
     location_move,
-    location_fix_ooBound
+    location_fix_ooBound,
+    wrap_actor_move,
+    wrap_actor_rotate,
+    wrap_actor_putdown,
+    wrap_actor_pickup
 
 const DIRECTIONS = [
     :NORTH,
@@ -330,6 +334,33 @@ function actor_putdown!(wo::World,ac::Actor,acd_put::Actor_Definition)
         error("The actor is not grabable")
     end
     actor_create!(wo,acd_put,ac.location,ac.orientation)
+end
+
+function wrap_actor_move(wo::World)
+    function (ac::Actor)
+        actor_move!(wo,ac,ac.orientation.value)
+    end
+end
+
+function wrap_actor_rotate()
+    function(ac::Actor)
+        actor_rotate!(ac,true)
+    end,
+    function (ac::Actor)
+        actor_rotate!(ac,false)
+    end
+end
+
+function wrap_actor_pickup(wo::World)
+    function (ac::Actor)
+        actor_pickup!(wo,ac)
+    end
+end
+
+function wrap_actor_putdown(wo::World,acd_put::Actor_Definition)
+    function(ac::Actor)
+        actor_putdown!(wo,ac,acd_put)
+    end
 end
 
 end
