@@ -72,8 +72,8 @@ function kara_world_draw(wo::World_GUI)
         avail_w = width(wo.canvas)-20
         avail_h = height(wo.canvas)-20
         # Needed dimensions
-        needed_cell_width = avail_h/wo.world.size.width
-        needed_cell_height = avail_w/wo.world.size.height
+        needed_cell_width = avail_w/wo.world.size.width
+        needed_cell_height = avail_h/wo.world.size.height
         # Decisive dimension
         needed_cell_dim = min(needed_cell_width,needed_cell_height)
         # Grid height and width
