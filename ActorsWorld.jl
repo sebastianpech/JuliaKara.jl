@@ -24,7 +24,13 @@ export
     actor_definition_at_location,
     is_actor_definition_left,
     is_actor_definition_right,
-    is_actor_definition_front
+    is_actor_definition_front,
+    is_actor_definition_here,
+    wrap_actor_definition_left,
+    wrap_actor_definition_right,
+    wrap_actor_definition_front,
+    wrap_actor_definition_here,
+    orientation_to_rad
 
 const DIRECTIONS = [
     :NORTH,
@@ -79,6 +85,20 @@ function orientation_rotate(or::Orientation,::Type{Val{true}})
         return Orientation(DIRECTIONS[1])
     else
         error("Invalid direction, use $DIRECTIONS")
+    end
+end
+
+function orientation_to_rad(or::Orientation)
+    if or.value == DIRECTIONS[1]
+        return π/2
+    elseif or.value == DIRECTIONS[2]
+        return 0
+    elseif or.value == DIRECTIONS[3]
+        return 3π/2
+    elseif or.value == DIRECTIONS[4]
+        return π
+    else
+        error("Invalid orientation, use $DIRECTIONS")
     end
 end
 
@@ -216,6 +236,7 @@ function actor_create!(wo::World,a_def::Actor_Definition,lo::Location,or::Orient
     push!(wo.actors,ac)
     return ac
 end
+
 """
     actor_delete!(wo::World,ac::Actor)
 
@@ -226,6 +247,7 @@ function actor_delete!(wo::World,ac::Actor)
     i != 0 || error("Actor not in this world!")
     deleteat!(wo.actors,i)
 end
+
 """
     get_actors_at_location(wo::World,lo::Location)
 
@@ -365,32 +387,8 @@ function is_actor_definition_front(wo::World,ac::Actor,acd::Actor_Definition)
     return actor_definition_at_location(wo,lo_left,acd)
 end
 
-function wrap_actor_move(wo::World)
-    function (ac::Actor)
-        actor_move!(wo,ac,ac.orientation.value)
-    end
+function is_actor_definition_here(wo::World,ac::Actor,acd::Actor_Definition)
+    return actor_definition_at_location(wo,ac.location,acd)
 end
-
-function wrap_actor_rotate()
-    function(ac::Actor)
-        actor_rotate!(ac,true)
-    end,
-    function (ac::Actor)
-        actor_rotate!(ac,false)
-    end
-end
-
-function wrap_actor_pickup(wo::World)
-    function (ac::Actor)
-        actor_pickup!(wo,ac)
-    end
-end
-
-function wrap_actor_putdown(wo::World,acd_put::Actor_Definition)
-    function(ac::Actor)
-        actor_putdown!(wo,ac,acd_put)
-    end
-end
-
 
 end

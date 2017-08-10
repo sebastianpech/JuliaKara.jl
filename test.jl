@@ -2,8 +2,8 @@ workspace()
 using Base.Test
 include("ActorsWorld.jl");using ActorsWorld
 
-@testset begin
-    @testset begin "Basic"
+@testset "Actors-World" begin
+    @testset "Basic" begin
         or = Orientation(ActorsWorld.DIRECTIONS[1])
         @test orientation_rotate(or,Val{true}).value == ActorsWorld.DIRECTIONS[2]
         @test orientation_rotate(or,Val{false}).value == ActorsWorld.DIRECTIONS[4]
@@ -13,12 +13,12 @@ include("ActorsWorld.jl");using ActorsWorld
         @test location_move(lo,Orientation(ActorsWorld.DIRECTIONS[2])).x == 2
         @test location_fix_ooBound(wo,Location(0,15)) == Location(10,2)
     end
-    @testset begin "World generation"
+    @testset "World generation" begin
         wo = World(10,12)
         @test wo.size.height == 12
         @test wo.size.width == 10
     end
-    @testset begin "Actors"
+    @testset "Actors" begin
         kara = Actor_Definition(
             moveable=true,
             turnable=true
@@ -38,7 +38,7 @@ include("ActorsWorld.jl");using ActorsWorld
         @test_throws ErrorException actor_create!(wo,kara,Location(1,3),
                                                   Orientation(ActorsWorld.DIRECTIONS[1]))
     end
-    @testset begin "World Boundaries"
+    @testset "World Boundaries" begin
         ka = Actor_Definition(
             moveable=true,
             turnable=true
@@ -65,7 +65,7 @@ include("ActorsWorld.jl");using ActorsWorld
         actor_move!(wo,ac,ActorsWorld.DIRECTIONS[2]) # 1,2
         @test ac.location == Location(1,2)
     end
-    @testset begin "Moving other Actors"
+    @testset "Moving other Actors" begin
         kara_2 = Actor_Definition(
             moveable=true,
             turnable=true
@@ -106,12 +106,15 @@ include("ActorsWorld.jl");using ActorsWorld
     @testset "Sensors" begin
         wo = World(10,10)
         acd = Actor_Definition()
+        acdp = Actor_Definition(passable=true)
         ac = actor_create!(wo,acd,Location(5,5),Orientation(:NORTH))
         actor_create!(wo,acd,Location(6,5),Orientation(:NORTH))
         actor_create!(wo,acd,Location(5,6),Orientation(:NORTH))
+        actor_create!(wo,acdp,Location(5,5),Orientation(:NORTH))
         @test is_actor_definition_left(wo,ac,acd) == false
         @test is_actor_definition_right(wo,ac,acd) == true
         @test is_actor_definition_front(wo,ac,acd) == true
         @test is_actor_definition_right(wo,ac,Actor_Definition(moveable=true)) == false
+        @test is_actor_definition_here(wo,ac,acdp) == true
     end
 end
