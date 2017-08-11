@@ -1,6 +1,7 @@
-workspace()
+module actor_world_test
 using Base.Test
-include("../src/ActorsWorld.jl"); using ActorsWorld
+include("../src/ActorsWorld.jl"); using .ActorsWorld
+
 
 @testset "Actors-World" begin
     @testset "Basic" begin
@@ -128,4 +129,5 @@ include("../src/ActorsWorld.jl"); using ActorsWorld
         @test is_actor_definition_right(wo,ac,Actor_Definition(moveable=true)) == false
         @test is_actor_definition_here(wo,ac,acdp) == true
     end
+end
 end

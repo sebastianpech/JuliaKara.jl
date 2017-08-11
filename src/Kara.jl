@@ -45,7 +45,7 @@ mutable struct World_GUI
 end
 
 function world_redraw(wo::World_GUI)
-    wo.canvas.draw(1)
+    draw(wo.canvas)
     reveal(wo.canvas)
 end
 
