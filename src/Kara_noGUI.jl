@@ -103,7 +103,7 @@ function treeFront(wo::World,ac::Actor)
 end
 
 function mushroomFront(wo::World,ac::Actor)
-    is_actor_definition_front(wo,ac,ACTOR_DEFINITIONS[:tree])
+    is_actor_definition_front(wo,ac,ACTOR_DEFINITIONS[:mushroom])
 end
 
 function onLeaf(wo::World,ac::Actor)
