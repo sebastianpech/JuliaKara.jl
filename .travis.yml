@@ -5,11 +5,14 @@ os:
   - osx
 julia:
   - 0.6
-  - nightly
 notifications:
   email: false
 git:
   depth: 99999999
+addons:
+  apt:
+    packages:
+      - libgtk-3-dev
 
 ## uncomment the following lines to allow failures on nightly julia
 ## (tests will run but not make your overall status red)
