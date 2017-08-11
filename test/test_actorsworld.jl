@@ -1,6 +1,6 @@
 workspace()
 using Base.Test
-include("ActorsWorld.jl"); using ActorsWorld
+include("../src/ActorsWorld.jl"); using ActorsWorld
 
 @testset "Actors-World" begin
     @testset "Basic" begin
