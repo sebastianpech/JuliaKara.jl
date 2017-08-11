@@ -1,13 +1,13 @@
 workspace()
 using Base.Test
-include("ActorsWorld.jl");using ActorsWorld
+include("ActorsWorld.jl"); using ActorsWorld
 
 @testset "Actors-World" begin
     @testset "Basic" begin
         or = Orientation(ActorsWorld.DIRECTIONS[1])
         @test orientation_rotate(or,Val{true}).value == ActorsWorld.DIRECTIONS[2]
         @test orientation_rotate(or,Val{false}).value == ActorsWorld.DIRECTIONS[4]
-        @test_throws ErrorException Orientation(:foo)
+        @test_throws InvalidDirectionError Orientation(:foo)
         lo = Location(1,2)
         wo = World(10,13)
         @test location_move(lo,Orientation(ActorsWorld.DIRECTIONS[2])).x == 2
@@ -35,8 +35,12 @@ include("ActorsWorld.jl");using ActorsWorld
         ac3 = actor_create!(wo,leaf,Location(1,3),Orientation(ActorsWorld.DIRECTIONS[1]))
         @test length(get_actors_at_location(wo,Location(1,3))) == 2
         @test length(get_actors_at_location(wo,Location(2,3))) == 0
-        @test_throws ErrorException actor_create!(wo,kara,Location(1,3),
-                                                  Orientation(ActorsWorld.DIRECTIONS[1]))
+        @test_throws LocationFullError actor_create!(wo,kara,Location(1,3),
+                                                     Orientation(ActorsWorld.DIRECTIONS[1]))
+        k2 = actor_create!(wo,kara,Location(5,5),Orientation(ActorsWorld.DIRECTIONS[1]))
+        @test_throws ActorNotPassableError actor_create!(wo,kara,Location(5,5),Orientation(ActorsWorld.DIRECTIONS[1]))
+        actor_delete!(wo,k2)
+        @test_throws ActorNotFound actor_delete!(wo,k2)
     end
     @testset "World Boundaries" begin
         ka = Actor_Definition(
@@ -47,7 +51,7 @@ include("ActorsWorld.jl");using ActorsWorld
         ac = actor_create!(
             wo,ka,Location(1,1),Orientation(ActorsWorld.DIRECTIONS[1])
         )
-        @test_throws ErrorException actor_create!(
+        @test_throws LocationOutsideError actor_create!(
             wo,ka,Location(1,10),Orientation(ActorsWorld.DIRECTIONS[1])
         )
         actor_move!(wo,ac,ActorsWorld.DIRECTIONS[1]) # 1,2
@@ -73,7 +77,10 @@ include("ActorsWorld.jl");using ActorsWorld
         mushroom = Actor_Definition(
             moveable=true,
         )
-        wo = World(1,5)
+        tree = Actor_Definition(
+            moveable=false
+        )
+        wo = World(2,5)
         ac_kara_2 = actor_create!(
             wo,kara_2,Location(1,1),Orientation(ActorsWorld.DIRECTIONS[1])
         )
@@ -86,7 +93,11 @@ include("ActorsWorld.jl");using ActorsWorld
         ac_mushroom2 = actor_create!(
             wo,mushroom,Location(1,2),Orientation(ActorsWorld.DIRECTIONS[1])
         )
-        @test_throws ErrorException actor_move!(wo,ac_kara_2,ActorsWorld.DIRECTIONS[1])
+        actor_create!(
+            wo,tree,Location(2,1),Orientation(ActorsWorld.DIRECTIONS[1])
+        )
+        @test_throws ActorInvalidMultipleMovementError actor_move!(wo,ac_kara_2,ActorsWorld.DIRECTIONS[1])
+        @test_throws ActorNotPassableError actor_move!(wo,ac_kara_2,ActorsWorld.DIRECTIONS[2])
     end
     @testset "Putting and Picking" begin
         wo = World(1,10)
@@ -100,8 +111,8 @@ include("ActorsWorld.jl");using ActorsWorld
         @test wo.actors[2].actor_definition == leaf
         actor_pickup!(wo,kara_ac)
         @test length(wo.actors) == 1
-        @test_throws ErrorException actor_pickup!(wo,kara_ac)
-        @test_throws ErrorException actor_putdown!(wo,kara_ac,kara_p)
+        @test_throws ActorGrabNotFoundError actor_pickup!(wo,kara_ac)
+        @test_throws ActorInvalidGrabError actor_putdown!(wo,kara_ac,kara_p)
     end
     @testset "Sensors" begin
         wo = World(10,10)

@@ -30,7 +30,67 @@ export
     wrap_actor_definition_right,
     wrap_actor_definition_front,
     wrap_actor_definition_here,
-    orientation_to_rad
+    orientation_to_rad,
+    AbstractActorsWorldException,
+    InvalidDirectionError,
+    LocationFullError,
+    ActorNotPassableError,
+    LocationOutsideError,
+    ActorNotFound,
+    ActorInvalidRotationError,
+    ActorInvalidMovementError,
+    ActorInvalidMultipleMovementError,
+    ActorInvalidGrabError,
+    ActorGrabNotFoundError,
+    WorldCorrupError
+
+abstract type AbstractActorsWorldException <: Exception end
+struct InvalidDirectionError <: AbstractActorsWorldException
+    direction::Symbol
+end
+function Base.showerror(io::IO,e::InvalidDirectionError)
+    print(io,"direction $(e.direction) is invalid")
+end
+struct LocationFullError <: AbstractActorsWorldException end
+function Base.showerror(io::IO,e::LocationFullError)
+    print(io,"can't place more than two actors at one location")
+end
+struct ActorNotPassableError <: AbstractActorsWorldException end
+function Base.showerror(io::IO,e::ActorNotPassableError)
+    print(io,"can't place two not passable actors at one location")
+end
+struct LocationOutsideError <: AbstractActorsWorldException end
+function Base.showerror(io::IO,e::LocationOutsideError)
+    print(io,"location is outside of this world")
+end
+struct ActorNotFound <: AbstractActorsWorldException end
+function Base.showerror(io::IO,e::ActorNotFound)
+    print(io,"actor is not in this world")
+end
+struct ActorInvalidRotationError <: AbstractActorsWorldException end
+function Base.showerror(io::IO,e::ActorInvalidRotationError)
+    print(io,"actor is not turnable")
+end
+struct ActorInvalidMovementError <: AbstractActorsWorldException end
+function Base.showerror(io::IO,e::ActorInvalidMovementError)
+    print(io,"actor is not moveable")
+end
+struct ActorInvalidMultipleMovementError <: AbstractActorsWorldException end
+function Base.showerror(io::IO,e::ActorInvalidMultipleMovementError)
+    print(io,"too many actors to move")
+end
+struct ActorInvalidGrabError <: AbstractActorsWorldException end
+function Base.showerror(io::IO,e::ActorInvalidGrabError)
+    print(io,"actor is not grabable")
+end
+struct ActorGrabNotFoundError <: AbstractActorsWorldException end
+function Base.showerror(io::IO,e::ActorGrabNotFoundError)
+    print(io,"there is not actor to grab")
+end
+struct WorldCorrupError <: AbstractActorsWorldException end
+function Base.showerror(io::IO,e::WorldCorrupError)
+    print(io,"this world is corrupted. This should not happen")
+end
 
 const DIRECTIONS = [
     :NORTH,
@@ -48,7 +108,7 @@ defined in DIRECTIONS.
 struct Orientation
     value::Symbol
     Orientation(value) = begin
-        value in DIRECTIONS || error("Invalid direction, use $DIRECTIONS")
+        value in DIRECTIONS || throw(InvalidDirectionError(value))
         new(value)
     end
 end
@@ -70,7 +130,7 @@ function orientation_rotate(or::Orientation,::Type{Val{false}})
     elseif or.value == DIRECTIONS[4]
         return Orientation(DIRECTIONS[3])
     else
-        error("Invalid direction, use $DIRECTIONS")
+        throw(InvalidDirectionError(or.value))
     end
 end
 
@@ -84,7 +144,7 @@ function orientation_rotate(or::Orientation,::Type{Val{true}})
     elseif or.value == DIRECTIONS[4]
         return Orientation(DIRECTIONS[1])
     else
-        error("Invalid direction, use $DIRECTIONS")
+        throw(InvalidDirectionError(or.value))
     end
 end
 
@@ -98,7 +158,7 @@ function orientation_to_rad(or::Orientation)
     elseif or.value == DIRECTIONS[4]
         return π
     else
-        error("Invalid orientation, use $DIRECTIONS")
+        throw(InvalidDirectionError(or.value))
     end
 end
 
@@ -223,14 +283,14 @@ function actor_create!(wo::World,a_def::Actor_Definition,lo::Location,or::Orient
     # One marke passable is ok
     ac_at_lo = get_actors_at_location(wo,lo)
     if length(ac_at_lo) > 1
-        error("Can't place new actor at this location, too many actors.")
+        throw(LocationFullError())
     end
     if length(ac_at_lo) == 1 && !ac_at_lo[1].actor_definition.passable && !a_def.passable
-        error("Can't place new actor at this location, actor not passable.")
+        throw(ActorNotPassableError())
     end
     # Check if the position is within the world
     if !location_within_world(wo,lo)
-        error("Can't place new actor at this location, location is outside of this world")
+        throw(LocationOutsideError())
     end
     ac = Actor(a_def,lo,or)
     push!(wo.actors,ac)
@@ -244,7 +304,7 @@ Delete the actor `ac` from the World `wo`.
 """
 function actor_delete!(wo::World,ac::Actor)
     i = findnext(wo.actors,ac,1)
-    i != 0 || error("Actor not in this world!")
+    i != 0 || throw(ActorNotFound())
     deleteat!(wo.actors,i)
 end
 
@@ -273,7 +333,7 @@ Rotate an actor `ac` by 1 step counter-clockwise for `false` and clockwise
 for `true`.
 """
 function actor_rotate!(ac::Actor,direction::Bool)
-    ac.actor_definition.turnable || error("Invalid Operation: Actor is not turnable")
+    ac.actor_definition.turnable || throw(ActorInvalidRotationError())
     ac.orientation = orientation_rotate(ac.orientation,Val{direction})
 end
 """
@@ -319,20 +379,20 @@ It actually stops the movement recursion by switching from true to false, which
 only allows one nested layer of recursion.
 """
 function actor_move!(wo::World,ac::Actor,direction::Symbol,parent::Bool=true)
-    ac.actor_definition.moveable || error("Invalid Operation: Actor is not moveable")
+    ac.actor_definition.moveable || throw(ActorInvalidMovementError())
     new_lo = location_move(ac.location,Orientation(direction))
     new_lo = location_fix_ooBound(wo,new_lo)
 
     for a in get_actors_at_location(wo,new_lo)
         if a.actor_definition.moveable && !a.actor_definition.passable
             if !parent
-                error("Can't move more than one element")
+                throw(ActorInvalidMultipleMovementError())
             end
             actor_move!(wo,a,direction,false)
         elseif a.actor_definition.passable
             continue
         else
-            error("Can't access field, actor is not passable")
+            throw(ActorNotPassableError())
         end
     end
     ac.location = new_lo
@@ -347,14 +407,14 @@ Remove an `grabable` actor from the same location `ac` is at.
 function actor_pickup!(wo::World,ac::Actor)
     actrs = get_actors_at_location(wo,ac.location)
     if length(actrs) == 1
-        error("There is nothing to pickup here.")
+        throw(ActorGrabNotFoundError())
     end
     if length(actrs) > 2
-        error("The world is corrupt! There are more than 2 actors on one field")
+        throw(WorldCorruptError())
     end
     filter!(a->a!=ac,actrs)
     if !actrs[1].actor_definition.grabable
-        error("The actor is not grabable")
+        throw(ActorInvalidGrabError())
     end
     actor_delete!(wo,actrs[1])
 end
@@ -367,7 +427,7 @@ Only works if `acd_put` has `grabable=true`.
 """ 
 function actor_putdown!(wo::World,ac::Actor,acd_put::Actor_Definition)
     if !acd_put.grabable
-        error("The actor is not grabable")
+        throw(ActorInvalidGrabError())
     end
     actor_create!(wo,acd_put,ac.location,ac.orientation)
 end
