@@ -1,61 +1,55 @@
 module kara_ex01
 using Base.Test
-using Kara
-
-@World wtest (10,10)
-kara = @wtest place_kara(4,4)
-
-function nextTest(world,kara)
-    turnRight(world,kara)
-    move(world,kara)
-    turnLeft(world,kara)
-end
+include("../src/Kara_noGUI.jl"); using .Kara_noGUI
 
 @testset "Kara Example 01" begin
+    wtest = World(10,10)
+    kara = place_kara(wtest,4,4)
 
-
-    @wtest begin
-        place_tree(4,5)
-        place_tree(5,6)
-        place_mushroom(5,5)
-        place_mushroom(6,5)
-        place_mushroom(6,6)
-        place_mushroom(7,5)
-        place_leaf(8,5)
+    function nextTest(world,kara)
+        turnRight(world,kara)
+        move(world,kara)
+        turnLeft(world,kara)
     end
 
-    @test_throws Kara.Kara_noGUI.ActorNotPassableError @wtest move(kara)
+    place_tree(wtest,4,5)
+    place_tree(wtest,5,6)
+    place_mushroom(wtest,5,5)
+    place_mushroom(wtest,6,5)
+    place_mushroom(wtest,6,6)
+    place_mushroom(wtest,7,5)
+    place_leaf(wtest,8,5)
+
+    @test_throws Kara_noGUI.ActorNotPassableError move(wtest,kara)
     nextTest(wtest,kara)
-    @test_throws Kara.Kara_noGUI.ActorNotPassableError @wtest move(kara)
+    @test_throws Kara_noGUI.ActorNotPassableError move(wtest,kara)
     nextTest(wtest,kara)
-    @test_throws Kara.Kara_noGUI.ActorInvalidMultipleMovementError @wtest move(kara)
+    @test_throws Kara_noGUI.ActorInvalidMultipleMovementError move(wtest,kara)
     nextTest(wtest,kara)
-    @wtest move(kara)
-    @test (@wtest mushroomFront(kara)) == true
-    @wtest begin
-        turnLeft(kara)
-        turnLeft(kara)
-        move(kara)
-        turnLeft(kara)
-        turnLeft(kara)
-    end
-    @test (@wtest mushroomFront(kara)) == false
+    move(wtest,kara)
+    @test (mushroomFront(wtest,kara)) == true
+    turnLeft(wtest,kara)
+    turnLeft(wtest,kara)
+    move(wtest,kara)
+    turnLeft(wtest,kara)
+    turnLeft(wtest,kara)
+    @test (mushroomFront(wtest,kara)) == false
     nextTest(wtest,kara)
-    @wtest move(kara)
-    @test (@wtest onLeaf(kara)) == true
-    @wtest removeLeaf(kara)
-    @test (@wtest onLeaf(kara)) == false
-    @test_throws Kara.Kara_noGUI.ActorGrabNotFoundError @wtest removeLeaf(kara)
-    @wtest putLeaf(kara)
-    @test (@wtest onLeaf(kara)) == true
-    @test (@wtest treeLeft(kara)) == false
-    @test (@wtest treeRight(kara)) == false
-    @test (@wtest treeFront(kara)) == false
-    @wtest place_tree(7,5)
-    @wtest place_tree(9,5)
-    @wtest place_tree(8,6)
-    @test (@wtest treeLeft(kara)) == true
-    @test (@wtest treeRight(kara)) == true
-    @test (@wtest treeFront(kara)) == true
+    move(wtest,kara)
+    @test (onLeaf(wtest,kara)) == true
+    removeLeaf(wtest,kara)
+    @test (onLeaf(wtest,kara)) == false
+    @test_throws Kara_noGUI.ActorGrabNotFoundError removeLeaf(wtest,kara)
+    putLeaf(wtest,kara)
+    @test (onLeaf(wtest,kara)) == true
+    @test (treeLeft(wtest,kara)) == false
+    @test (treeRight(wtest,kara)) == false
+    @test (treeFront(wtest,kara)) == false
+    place_tree(wtest,7,5)
+    place_tree(wtest,9,5)
+    place_tree(wtest,8,6)
+    @test (treeLeft(wtest,kara)) == true
+    @test (treeRight(wtest,kara)) == true
+    @test (treeFront(wtest,kara)) == true
 end
 end
