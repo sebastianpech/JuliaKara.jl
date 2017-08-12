@@ -19,7 +19,9 @@ export
     treeRight,
     mushroomFront,
     onLeaf,
-    @World
+    @World,
+    save_world,
+    load_world
 
 import .Kara_noGUI:World,
     place_kara,
@@ -191,6 +193,18 @@ macro World(name,size)
 
         end
     end)
+end
+
+function load_world(path::AbstractString,name::AbstractString)
+    loaded_wo = Kara_noGUI.load_world(path)
+    wo = World(loaded_wo.size.width,loaded_wo.size.height,name)
+    wo.world = loaded_wo
+    world_redraw(wo)
+    return wo
+end
+
+function save_world(wo::World_GUI,path::AbstractString)
+    Kara_noGUI.save_world(wo.world,path)
 end
 
 end

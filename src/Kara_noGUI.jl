@@ -17,7 +17,9 @@ export
     treeFront,
     treeRight,
     mushroomFront,
-    onLeaf
+    onLeaf,
+    load_world,
+    save_world
 
 const ACTOR_DEFINITIONS = Dict(
     :kara => Actor_Definition(
@@ -109,5 +111,9 @@ end
 function onLeaf(wo::World,ac::Actor)
     is_actor_definition_here(wo,ac,ACTOR_DEFINITIONS[:leaf])
 end
+
+include("Kara_interface_xml.jl")
+save_world = xml_save_world
+load_world = xml_load_world
 
 end
