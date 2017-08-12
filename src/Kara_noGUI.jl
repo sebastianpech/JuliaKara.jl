@@ -34,12 +34,12 @@ const ACTOR_DEFINITIONS = Dict(
     )
 )
 
-function place_kara(wo::World,x::Int,y::Int)
+function place_kara(wo::World,x::Int,y::Int,direction::Symbol=ActorsWorld.DIRECTIONS[1])
     actor_create!(
         wo,
         ACTOR_DEFINITIONS[:kara],
         Location(x,y),
-        Orientation(ActorsWorld.DIRECTIONS[1])
+        Orientation(direction)
     )
 end
 

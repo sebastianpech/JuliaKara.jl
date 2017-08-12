@@ -118,8 +118,8 @@ function kara_world_draw(wo::World_GUI)
     end
 end
 
-function place_kara(wo::World_GUI,x::Int,y::Int)
-    ac = place_kara(wo.world,x,y)
+function place_kara(wo::World_GUI,x::Int,y::Int,direction::Symbol=Kara_noGUI.ActorsWorld.DIRECTIONS[1])
+    ac = place_kara(wo.world,x,y,direction)
     world_redraw(wo)
     return ac
 end
