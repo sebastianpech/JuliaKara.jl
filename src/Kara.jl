@@ -176,16 +176,68 @@ treeFront(wo::World_GUI,ac::Actor) = treeFront(wo.world,ac)
 mushroomFront(wo::World_GUI,ac::Actor) = mushroomFront(wo.world,ac)
 onLeaf(wo::World_GUI,ac::Actor) = onLeaf(wo.world,ac)
 
-macro World(name,size)
+macro World(definition)
+    esc(quote
+            if typeof($definition) == String
+                world = load_world(
+                    $definition,
+                    "Kara"
+                )
+            else
+                world = World($definition...,"Kara")
+                place_kara(world,1,1)
+            end
+            kara = get_kara(world)
+            import Kara.Kara_noGUI:move,
+                turnLeft,
+                turnRight,
+                putLeaf,
+                removeLeaf,
+                treeFront,
+                treeLeft,
+                treeRight,
+                mushroomFront
+            function move(ac::Kara.Kara_noGUI.Actor)
+                move(world,ac)
+            end
+            function turnLeft(ac::Kara.Kara_noGUI.Actor)
+                turnLeft(world,ac)
+            end
+            function turnRight(ac::Kara.Kara_noGUI.Actor)
+                turnRight(world,ac)
+            end
+            function putLeaf(ac::Kara.Kara_noGUI.Actor)
+                putLeaf(world,ac)
+            end
+            function removeLeaf(ac::Kara.Kara_noGUI.Actor)
+                removeLeaf(world,ac)
+            end
+            function treeFront(ac::Kara.Kara_noGUI.Actor)
+                treeFront(world,ac)
+            end
+            function treeLeft(ac::Kara.Kara_noGUI.Actor)
+                treeLeft(world,ac)
+            end
+            function treeRight(ac::Kara.Kara_noGUI.Actor)
+                treeRight(world,ac)
+            end
+            function mushroomFront(ac::Kara.Kara_noGUI.Actor)
+                mushroomFront(world,ac)
+            end
+        end
+        )
+end
+
+macro World(name,definition)
     str_name = string(name)
     esc(quote
-        if typeof($size) == String
+        if typeof($definition) == String
             $name = load_world(
-                $size,
+                $definition,
                 $str_name
             )
         else
-            $name = World($size...,$str_name)
+            $name = World($definition...,$str_name)
         end
         macro $name(command)
             if command.head == :block
