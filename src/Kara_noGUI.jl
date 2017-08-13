@@ -19,7 +19,8 @@ export
     mushroomFront,
     onLeaf,
     load_world,
-    save_world
+    save_world,
+    get_kara
 
 const ACTOR_DEFINITIONS = Dict(
     :kara => Actor_Definition(
@@ -70,6 +71,19 @@ function place_mushroom(wo::World,x::Int,y::Int)
         Location(x,y),
         Orientation(ActorsWorld.DIRECTIONS[1])
     )
+end
+
+function get_kara(wo::World)
+    k_found = Actor[]
+    for ac in wo.actors
+        if ac.actor_definition == ACTOR_DEFINITIONS[:kara]
+            push!(k_found,ac)
+        end
+    end
+    # Return kara explicitly if only one was found
+    # This is not a good style but in terms of usability
+    # its better.
+    return length(k_found) == 1 ? k_found[1] : k_found
 end
 
 function move(wo::World,ac::Actor)

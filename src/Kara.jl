@@ -21,7 +21,8 @@ export
     onLeaf,
     @World,
     save_world,
-    load_world
+    load_world,
+    get_kara
 
 import .Kara_noGUI:World,
     place_kara,
@@ -178,7 +179,14 @@ onLeaf(wo::World_GUI,ac::Actor) = onLeaf(wo.world,ac)
 macro World(name,size)
     str_name = string(name)
     esc(quote
-        $name = World($size...,$str_name)
+        if typeof($size) == String
+            $name = load_world(
+                $size,
+                $str_name
+            )
+        else
+            $name = World($size...,$str_name)
+        end
         macro $name(command)
             if command.head == :block
                 for ca in command.args
@@ -207,4 +215,6 @@ function save_world(wo::World_GUI,path::AbstractString)
     Kara_noGUI.save_world(wo.world,path)
 end
 
+import .Kara_noGUI.get_kara
+get_kara(wo::World_GUI) = get_kara(wo.world)
 end
