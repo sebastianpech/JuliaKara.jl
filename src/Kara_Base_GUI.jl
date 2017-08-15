@@ -1,5 +1,5 @@
 module Kara_Base_GUI
-using Gtk.ShortNames, Graphics
+using Gtk,Gtk.ShortNames, Graphics
 
 export
     Grid,
@@ -39,8 +39,12 @@ function grid_coordinate_real(gr::Grid,x::Int,y::Int)
 end
 
 function world_init(title::AbstractString)
+    b = GtkBuilder(filename=joinpath(@__DIR__,"layout.glade"))
     c = @Canvas()
-    win = Window(c,title)
+    fc = b["frame_canvas"]
+    push!(fc,c)
+    win = b["win_main"]
+    showall(win)
     return win,c
 end
 
