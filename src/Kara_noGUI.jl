@@ -20,7 +20,8 @@ export
     onLeaf,
     load_world,
     save_world,
-    get_kara
+    get_kara,
+    world_export
 
 const ACTOR_DEFINITIONS = Dict(
     :kara => Actor_Definition(
@@ -129,5 +130,8 @@ end
 include("Kara_interface_xml.jl")
 save_world = xml_save_world
 load_world = xml_load_world
+
+import .ActorsWorld.copy
+world_export(wo::World) = copy(wo)
 
 end

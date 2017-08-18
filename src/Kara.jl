@@ -22,7 +22,9 @@ export
     @World,
     save_world,
     load_world,
-    get_kara
+    get_kara,
+    store,
+    reset
 
 import .Kara_noGUI:World,
     place_kara,
@@ -40,7 +42,9 @@ import .Kara_noGUI:World,
     mushroomFront,
     onLeaf,
     orientation_to_rad,
-    Actor
+    Actor,
+    get_kara,
+    world_export
 
 mutable struct World_GUI
     world::World
@@ -267,6 +271,13 @@ function save_world(wo::World_GUI,path::AbstractString)
     Kara_noGUI.save_world(wo.world,path)
 end
 
-import .Kara_noGUI.get_kara
 get_kara(wo::World_GUI) = get_kara(wo.world)
+store(wo::World_GUI) = world_export(wo.world)
+
+function reset(wo::World_GUI,woi::World)
+    wo.world = woi
+    world_redraw(wo)
+    nothing
+end
+
 end

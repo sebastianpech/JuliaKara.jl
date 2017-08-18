@@ -1,6 +1,8 @@
 module ActorsWorld
 
 import Base.==
+import Base.copy
+
 export
     Location,
     Orientation,
@@ -42,7 +44,8 @@ export
     ActorInvalidMultipleMovementError,
     ActorInvalidGrabError,
     ActorGrabNotFoundError,
-    WorldCorrupError
+    WorldCorrupError,
+    copy
 
 abstract type AbstractActorsWorldException <: Exception end
 struct InvalidDirectionError <: AbstractActorsWorldException
@@ -245,6 +248,15 @@ mutable struct Actor
     location::Location
     orientation::Orientation
 end
+
+function copy(ac::Actor)
+    Actor(
+        ac.actor_definition,
+        ac.location,
+        ac.orientation
+    )
+end
+
 """
     World(width::Int,height::Int)
 
@@ -255,6 +267,15 @@ struct World
     actors::Vector{Actor}
     World(width::Int,height::Int) = new(Size(width,height),Actor[])
 end
+
+function copy(wo::World)
+    c_wo = World(wo.size.width,wo.size.height)
+    for ac in wo.actors
+        push!(c_wo.actors,copy(ac))
+    end
+    return c_wo
+end
+
 """
     actor_create!(wo::World,a_def::Actor_Definition,lo::Location,or::Orientation)
 
