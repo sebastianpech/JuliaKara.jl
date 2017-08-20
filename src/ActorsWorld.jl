@@ -14,6 +14,7 @@ export
     actor_delete!,
     actor_rotate!,
     actor_move!,
+    actor_moveto!,
     actor_putdown!,
     actor_pickup!,
     get_actors_at_location,
@@ -300,6 +301,19 @@ julia> actor_move!(wo,ac_new,:NORTH)
 ```
 """
 function actor_create!(wo::World,a_def::Actor_Definition,lo::Location,or::Orientation)
+    actor_validate_location_move(wo,a_def,lo)
+    ac = Actor(a_def,lo,or)
+    push!(wo.actors,ac)
+    return ac
+end
+
+function actor_moveto!(wo::World,ac::Actor,lo::Location)
+    actor_validate_location_move(wo,ac.actor_definition,lo)
+    ac.location = lo
+    return nothing
+end
+
+function actor_validate_location_move(wo::World,a_def::Actor_Definition,lo::Location)
     # Check if actors already exist at this location
     # One marke passable is ok
     ac_at_lo = get_actors_at_location(wo,lo)
@@ -313,9 +327,7 @@ function actor_create!(wo::World,a_def::Actor_Definition,lo::Location,or::Orient
     if !location_within_world(wo,lo)
         throw(LocationOutsideError())
     end
-    ac = Actor(a_def,lo,or)
-    push!(wo.actors,ac)
-    return ac
+    return true
 end
 
 """

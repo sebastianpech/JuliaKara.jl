@@ -54,15 +54,20 @@ mutable struct World_GUI
     saved_world::World
     drawing_delay::Float64
     edit_mode::Symbol
+    drag_mode::Bool
+    drag_handler::UInt64
+    drag_actor::Any
     World_GUI(world,canvas,saved_world,drawing_delay) = begin
-        new(world,canvas,saved_world,drawing_delay,:none)
+        new(world,canvas,saved_world,drawing_delay,:none,false,UInt64(0),nothing)
     end
 end
 
-function world_redraw(wo::World_GUI)
+function world_redraw(wo::World_GUI,no_delay::Bool=false)
     draw(wo.canvas)
     reveal(wo.canvas)
-    sleep(wo.drawing_delay/1000)
+    if !no_delay
+        sleep(wo.drawing_delay/1000)
+    end
 end
 
 function World(height::Int,width::Int,name::AbstractString)
@@ -104,6 +109,11 @@ function gtk_create_callback(b,wo::World_GUI)
     )
     signal_connect(
         wrap_button_down_callback(wo,b),
+        b["frame_canvas"],
+        "button-press-event"
+    )
+    signal_connect(
+        wrap_button_release_callback(wo,b),
         b["frame_canvas"],
         "button-release-event"
     )
@@ -162,7 +172,7 @@ function wrap_toolbar_btn_open_callback(wo::World_GUI,b)
         if path != ""
             wo.world = Kara_noGUI.load_world(path)
             wo.saved_world = copy(wo.world)
-            world_redraw(wo)
+            world_redraw(wo,true)
         end
     end
 end
@@ -180,6 +190,61 @@ function wrap_toolbar_btn_save_callback(wo::World_GUI,b)
 end
 
 function wrap_button_down_callback(wo::World_GUI,b)
+    ctxid = Gtk.context_id(b["statusbar"], "Kara")
+    function (widget,event)
+        x,y = Kara_Base_GUI.grid_coordinate_virt(
+            grid_generate(wo),
+            event.x,event.y
+        )
+        actors_at_field = Kara_noGUI.ActorsWorld.get_actors_at_location(
+            wo.world,
+            Kara_noGUI.Location(x,y)
+        )
+        if length(actors_at_field) > 0
+            wo.drag_handler = signal_connect(
+                wrap_actor_drag(wo,actors_at_field[1],b),
+                b["frame_canvas"],
+                "motion-notify-event"
+            )
+            wo.drag_mode = true
+            wo.drag_actor = actors_at_field[1]
+        end
+        return nothing
+    end
+end
+
+function wrap_actor_drag(wo::World_GUI,ac::Kara_noGUI.Actor,b)
+    function(widget,event)
+        world_redraw(wo,true)
+        ctx = getgc(wo.canvas)
+        gr = grid_generate(wo)
+        x,y = Kara_Base_GUI.grid_coordinate_virt(
+            gr,
+            event.x,event.y
+        )
+        if ac.actor_definition == Kara_noGUI.ACTOR_DEFINITIONS[:kara]
+            set_source_rgb(ctx,0,0,0)
+            symbol_triangle(gr,ctx,
+                            x,
+                            y,
+                            orientation_to_rad(ac.orientation)-π/2)
+        elseif ac.actor_definition == Kara_noGUI.ACTOR_DEFINITIONS[:mushroom]
+            set_source_rgb(ctx,1,0,0)
+            symbol_circle(gr,ctx,x,y)
+        elseif ac.actor_definition == Kara_noGUI.ACTOR_DEFINITIONS[:tree]
+            set_source_rgb(ctx,0.5,0.3,0)
+            symbol_circle(gr,ctx,x,y)
+        elseif ac.actor_definition == Kara_noGUI.ACTOR_DEFINITIONS[:leaf]
+            set_source_rgb(ctx,0,0.5,0)
+            symbol_star(gr,ctx,x,y)
+        else
+            error("Missing actor definition, cant draw shape.")
+        end
+        reveal(widget)
+    end
+end
+
+function wrap_button_release_callback(wo::World_GUI,b)
     ctxid = Gtk.context_id(b["statusbar"], "Kara")
     function(widget,event)
         if wo.edit_mode != :none
@@ -199,7 +264,7 @@ function wrap_button_down_callback(wo::World_GUI,b)
                         wo.world,
                         ac
                     )
-                    world_redraw(wo)
+                    world_redraw(wo,true)
                     return nothing
                 end
             end
@@ -211,8 +276,33 @@ function wrap_button_down_callback(wo::World_GUI,b)
                     Kara_noGUI.ActorsWorld.DIRECTIONS[1]
                 )
             )
-            world_redraw(wo)
+            world_redraw(wo,true)
             return nothing
+        elseif wo.drag_mode
+            signal_handler_disconnect(
+                b["frame_canvas"],
+                wo.drag_handler
+            )
+            wo.drag_handler = UInt64(0)
+
+            x,y = Kara_Base_GUI.grid_coordinate_virt(
+                grid_generate(wo),
+                event.x,event.y
+            )
+            actors_at_field = Kara_noGUI.ActorsWorld.get_actors_at_location(
+                wo.world,
+                Kara_noGUI.Location(x,y)
+            )
+
+            Kara_noGUI.actor_moveto!(
+                wo.world,
+                wo.drag_actor,
+                Kara_noGUI.Location(
+                    x,y
+                )
+            )
+
+            world_redraw(wo,true)
         end
         nothing
     end
@@ -279,7 +369,7 @@ end
 
 function kara_world_draw(wo::World_GUI)
     @guarded draw(wo.canvas) do widget
-        ctx = getgc(wo.canvas)
+                ctx = getgc(wo.canvas)
         # Draw Background
         set_source_rgb(ctx,0.85,0.85,0.85)
         paint(ctx)
@@ -452,7 +542,7 @@ function load_world(path::AbstractString,name::AbstractString)
     wo = World(loaded_wo.size.width,loaded_wo.size.height,name)
     wo.world = loaded_wo
     wo.saved_world = copy(loaded_wo)
-    world_redraw(wo)
+    world_redraw(wo,true)
     return wo
 end
 
@@ -465,7 +555,7 @@ store(wo::World_GUI) = world_export(wo.world)
 
 function reset(wo::World_GUI,woi::World)
     wo.world = woi
-    world_redraw(wo)
+    world_redraw(wo,true)
     nothing
 end
 
