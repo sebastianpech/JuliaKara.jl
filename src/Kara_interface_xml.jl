@@ -159,7 +159,7 @@ function xml_save_world(wo::World,path::AbstractString)
     xleaf = new_child(xworld_def,XML_NAMES[:leaf])
     xkara = new_child(xworld_def,XML_NAMES[:kara])
     # iterate over actors
-    for ac in sort(wo.actors,by=a->a.actor_definition.passable,rev=true)
+    for ac in wo.actors
         if ac.actor_definition == Kara_noGUI.ACTOR_DEFINITIONS[:kara]
             t = new_child(xkara,"XmlKara")
             set_attributes(t,Dict(

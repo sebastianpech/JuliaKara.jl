@@ -33,8 +33,8 @@ const ACTOR_DEFINITIONS = Dict(
         moveable=true
     ),
     :leaf => Actor_Definition(
-        passable=true,
-        grabable=true
+        grabable=true,
+        layer=0
     )
 )
 

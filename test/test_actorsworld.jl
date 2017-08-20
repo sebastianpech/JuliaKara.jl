@@ -25,7 +25,7 @@ include("../src/ActorsWorld.jl"); using .ActorsWorld
             turnable=true
         )
         leaf = Actor_Definition(
-            passable=true
+            layer=0
         )
         wo = World(10,10)
         ac1 = actor_create!(wo,kara,Location(1,3),Orientation(ActorsWorld.DIRECTIONS[1]))
@@ -39,7 +39,7 @@ include("../src/ActorsWorld.jl"); using .ActorsWorld
         @test_throws LocationFullError actor_create!(wo,kara,Location(1,3),
                                                      Orientation(ActorsWorld.DIRECTIONS[1]))
         k2 = actor_create!(wo,kara,Location(5,5),Orientation(ActorsWorld.DIRECTIONS[1]))
-        @test_throws ActorNotPassableError actor_create!(wo,kara,Location(5,5),Orientation(ActorsWorld.DIRECTIONS[1]))
+        @test_throws LocationFullError actor_create!(wo,kara,Location(5,5),Orientation(ActorsWorld.DIRECTIONS[1]))
         actor_delete!(wo,k2)
         @test_throws ActorNotFound actor_delete!(wo,k2)
     end
@@ -98,12 +98,16 @@ include("../src/ActorsWorld.jl"); using .ActorsWorld
             wo,tree,Location(2,1),Orientation(ActorsWorld.DIRECTIONS[1])
         )
         @test_throws ActorInvalidMultipleMovementError actor_move!(wo,ac_kara_2,ActorsWorld.DIRECTIONS[1])
-        @test_throws ActorNotPassableError actor_move!(wo,ac_kara_2,ActorsWorld.DIRECTIONS[2])
+        @test_throws ActorInvalidMovementError actor_move!(wo,ac_kara_2,ActorsWorld.DIRECTIONS[2])
     end
     @testset "Putting and Picking" begin
         wo = World(1,10)
         leaf = Actor_Definition(
-            passable=true,
+            layer=0,
+            grabable=true
+        )
+        leaf_2 = Actor_Definition(
+            layer=-1,
             grabable=true
         )
         kara_p = Actor_Definition()
@@ -114,11 +118,12 @@ include("../src/ActorsWorld.jl"); using .ActorsWorld
         @test length(wo.actors) == 1
         @test_throws ActorGrabNotFoundError actor_pickup!(wo,kara_ac)
         @test_throws ActorInvalidGrabError actor_putdown!(wo,kara_ac,kara_p)
+        @test_throws ActorNotPlaceableError actor_putdown!(wo,kara_ac,leaf_2)
     end
     @testset "Sensors" begin
         wo = World(10,10)
         acd = Actor_Definition()
-        acdp = Actor_Definition(passable=true)
+        acdp = Actor_Definition(layer=0)
         ac = actor_create!(wo,acd,Location(5,5),Orientation(:NORTH))
         actor_create!(wo,acd,Location(6,5),Orientation(:NORTH))
         actor_create!(wo,acd,Location(5,6),Orientation(:NORTH))

@@ -20,9 +20,9 @@ include("../src/Kara_noGUI.jl"); using .Kara_noGUI
     place_mushroom(wtest,7,5)
     place_leaf(wtest,8,5)
 
-    @test_throws Kara_noGUI.ActorNotPassableError move(wtest,kara)
+    @test_throws Kara_noGUI.ActorInvalidMovementError move(wtest,kara)
     nextTest(wtest,kara)
-    @test_throws Kara_noGUI.ActorNotPassableError move(wtest,kara)
+    @test_throws Kara_noGUI.ActorInvalidMovementError move(wtest,kara)
     nextTest(wtest,kara)
     @test_throws Kara_noGUI.ActorInvalidMultipleMovementError move(wtest,kara)
     nextTest(wtest,kara)
