@@ -53,6 +53,10 @@ mutable struct World_GUI
     canvas::Gtk.GtkCanvas
     saved_world::World
     drawing_delay::Float64
+    edit_mode::Symbol
+    World_GUI(world,canvas,saved_world,drawing_delay) = begin
+        new(world,canvas,saved_world,drawing_delay,:none)
+    end
 end
 
 function world_redraw(wo::World_GUI)
@@ -89,6 +93,16 @@ function gtk_create_callback(b,wo::World_GUI)
         "clicked"
     )
     signal_connect(
+        wrap_toolbar_btn_open_callback(wo,b),
+        b["toolbar_btn_open"],
+        "clicked"
+    )
+    signal_connect(
+        wrap_toolbar_btn_save_callback(wo,b),
+        b["toolbar_btn_save"],
+        "clicked"
+    )
+    signal_connect(
         wrap_button_down_callback(wo,b),
         b["frame_canvas"],
         "button-release-event"
@@ -96,23 +110,38 @@ function gtk_create_callback(b,wo::World_GUI)
     signal_connect(
         wrap_button_edit_tree(wo,b),
         b["edit_btn_tree"],
-        "toggled"
+        "clicked"
     )
     signal_connect(
         wrap_button_edit_mushroom(wo,b),
         b["edit_btn_mushroom"],
-        "toggled"
+        "clicked"
     )
     signal_connect(
         wrap_button_edit_leaf(wo,b),
         b["edit_btn_leaf"],
-        "toggled"
+        "clicked"
     )
     signal_connect(
         wrap_button_edit_kara(wo,b),
         b["edit_btn_kara"],
-        "toggled"
+        "clicked"
     )
+    signal_connect(
+        wrap_key_press(wo,b),
+        b["win_main"],
+        "key-release-event"
+    )
+end
+
+function wrap_key_press(wo::World_GUI,b)
+    ctxid = Gtk.context_id(b["statusbar"], "Kara")
+    function(widget,key)
+        if key.keyval == Gtk.GdkKeySyms.Escape
+            push!(b["statusbar"],ctxid,"")
+            wo.edit_mode = :none
+        end
+    end
 end
 
 function wrap_slider_value_changed_callback(wo::World_GUI)
@@ -127,13 +156,65 @@ function wrap_toolbar_btn_reset_callback(wo::World_GUI)
     end
 end
 
+function wrap_toolbar_btn_open_callback(wo::World_GUI,b)
+    function(widget)
+        path = open_dialog("Pick a World-File", b["win_main"], ("*.world",))
+        if path != ""
+            wo.world = Kara_noGUI.load_world(path)
+            wo.saved_world = copy(wo.world)
+            world_redraw(wo)
+        end
+    end
+end
+
+function wrap_toolbar_btn_save_callback(wo::World_GUI,b)
+    function(widget)
+        path = save_dialog("Save as ...", b["win_main"], ("*.world",))
+        if path != ""
+            save_world(
+                wo,
+                path
+            )
+        end
+    end
+end
+
 function wrap_button_down_callback(wo::World_GUI,b)
     ctxid = Gtk.context_id(b["statusbar"], "Kara")
     function(widget,event)
-        x,y = Kara_Base_GUI.grid_coordinate_virt(
-            grid_generate(wo),
-            event.x,event.y
-        )
+        if wo.edit_mode != :none
+            x,y = Kara_Base_GUI.grid_coordinate_virt(
+                grid_generate(wo),
+                event.x,event.y
+            )
+            actors_at_field = Kara_noGUI.ActorsWorld.get_actors_at_location(
+                wo.world,
+                Kara_noGUI.Location(x,y)
+            )
+            # In case one of the acors at x,y is of the same type as the editing
+            # type, delete it. Else just proceed
+            for ac in actors_at_field
+                if ac.actor_definition == Kara_noGUI.ACTOR_DEFINITIONS[wo.edit_mode]
+                    Kara_noGUI.ActorsWorld.actor_delete!(
+                        wo.world,
+                        ac
+                    )
+                    world_redraw(wo)
+                    return nothing
+                end
+            end
+            Kara_noGUI.actor_create!(
+                wo.world,
+                Kara_noGUI.ACTOR_DEFINITIONS[wo.edit_mode],
+                Kara_noGUI.Location(x,y),
+                Kara_noGUI.Orientation(
+                    Kara_noGUI.ActorsWorld.DIRECTIONS[1]
+                )
+            )
+            world_redraw(wo)
+            return nothing
+        end
+        nothing
     end
 end
 
@@ -141,6 +222,7 @@ function wrap_button_edit_tree(wo::World_GUI,b)
     ctxid = Gtk.context_id(b["statusbar"], "Kara")
     function (widget)
         push!(b["statusbar"],ctxid,"[Edit] Tree")
+        wo.edit_mode = :tree
     end
 end
 
@@ -148,6 +230,7 @@ function wrap_button_edit_mushroom(wo::World_GUI,b)
     ctxid = Gtk.context_id(b["statusbar"], "Kara")
     function (widget)
         push!(b["statusbar"],ctxid,"[Edit] Mushroom")
+        wo.edit_mode = :mushroom
     end
 end
 
@@ -155,12 +238,14 @@ function wrap_button_edit_leaf(wo::World_GUI,b)
     ctxid = Gtk.context_id(b["statusbar"], "Kara")
     function (widget)
         push!(b["statusbar"],ctxid,"[Edit] Leaf")
+        wo.edit_mode = :leaf
     end
 end
 
 function wrap_button_edit_kara(wo::World_GUI,b)
     ctxid = Gtk.context_id(b["statusbar"], "Kara")
     function (widget)
+        wo.edit_mode = :kara
         push!(b["statusbar"],ctxid,"[Edit] Kara")
     end
 end

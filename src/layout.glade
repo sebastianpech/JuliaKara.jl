@@ -7,11 +7,6 @@
     <property name="step_increment">1</property>
     <property name="page_increment">10</property>
   </object>
-  <object class="GtkImage" id="reset">
-    <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <property name="stock">gtk-undo</property>
-  </object>
   <object class="GtkWindow" id="win_main">
     <property name="can_focus">False</property>
     <property name="default_width">440</property>
@@ -61,7 +56,7 @@
                         <property name="can_focus">False</property>
                         <property name="label" translatable="yes">Elements</property>
                         <child>
-                          <object class="GtkToggleToolButton" id="edit_btn_tree">
+                          <object class="GtkToolButton" id="edit_btn_tree">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="label" translatable="yes">Tree</property>
@@ -69,7 +64,7 @@
                           </object>
                         </child>
                         <child>
-                          <object class="GtkToggleToolButton" id="edit_btn_mushroom">
+                          <object class="GtkToolButton" id="edit_btn_mushroom">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="label" translatable="yes">Mushroom</property>
@@ -80,7 +75,7 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkToggleToolButton" id="edit_btn_leaf">
+                          <object class="GtkToolButton" id="edit_btn_leaf">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="label" translatable="yes">Leaf</property>
@@ -91,7 +86,7 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkToggleToolButton" id="edit_btn_kara">
+                          <object class="GtkToolButton" id="edit_btn_kara">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="label" translatable="yes">Kara</property>
@@ -125,7 +120,31 @@
                     <property name="can_focus">False</property>
                     <property name="label" translatable="yes">toolbutton</property>
                     <property name="use_underline">True</property>
-                    <property name="icon_widget">reset</property>
+                    <property name="stock_id">gtk-undelete</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="homogeneous">True</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkToolButton" id="toolbar_btn_open">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="use_underline">True</property>
+                    <property name="stock_id">gtk-open</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="homogeneous">True</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkToolButton" id="toolbar_btn_save">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="use_underline">True</property>
+                    <property name="stock_id">gtk-save</property>
                   </object>
                   <packing>
                     <property name="expand">False</property>

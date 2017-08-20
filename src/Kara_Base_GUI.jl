@@ -39,8 +39,8 @@ function grid_coordinate_real(gr::Grid,x::Int,y::Int)
 end
 
 function grid_coordinate_virt(gr::Grid,xr::Float64,yr::Float64)
-    floor((xr-gr.x)*gr.xe/gr.width+1),
-    ceil(gr.ye - (yr-gr.y)*gr.ye/gr.height)
+    Int(floor((xr-gr.x)*gr.xe/gr.width+1)),
+    Int(ceil(gr.ye - (yr-gr.y)*gr.ye/gr.height))
 end
 
 function world_init(title::AbstractString)
