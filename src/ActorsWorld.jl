@@ -37,7 +37,7 @@ export
     AbstractActorsWorldException,
     InvalidDirectionError,
     LocationFullError,
-    ActorNotPassableError,
+    ActorOnWrongLayerError,
     LocationOutsideError,
     ActorNotFound,
     ActorInvalidRotationError,
@@ -45,6 +45,7 @@ export
     ActorInvalidMultipleMovementError,
     ActorInvalidGrabError,
     ActorGrabNotFoundError,
+    ActorNotPlaceableError,
     WorldCorrupError,
     copy
 
@@ -59,9 +60,13 @@ struct LocationFullError <: AbstractActorsWorldException end
 function Base.showerror(io::IO,e::LocationFullError)
     print(io,"can't place more than two actors at one location")
 end
-struct ActorNotPassableError <: AbstractActorsWorldException end
-function Base.showerror(io::IO,e::ActorNotPassableError)
-    print(io,"can't place two not passable actors at one location")
+struct ActorOnWrongLayerError <: AbstractActorsWorldException end
+function Base.showerror(io::IO,e::ActorOnWrongLayerError)
+    print(io,"two actors on the same lable can't share a cell")
+end
+struct ActorNotPlaceableError <: AbstractActorsWorldException end
+function Base.showerror(io::IO,e::ActorNotPlaceableError)
+    print(io,"to place an actor it must be exactly one layer below")
 end
 struct LocationOutsideError <: AbstractActorsWorldException end
 function Base.showerror(io::IO,e::LocationOutsideError)
@@ -213,20 +218,22 @@ Defines the behavior and the constraints of an actor.
 # Argmuments
 - `moveable::Bool`: Defines the movement of this actor.
 - `turnable::Bool`: Defines the rotation of this actor.
-- `passable::Bool`: Defines if this actor can share a field with another actor
 - `grabable::Bool`: Defines if the actor can be picked-up and put-down
+- `layer::Int`    : Defines the leayer the actor moves on
+
 """
 struct Actor_Definition
     moveable::Bool
     turnable::Bool
-    passable::Bool
     grabable::Bool
+    layer::Int
     Actor_Definition(;moveable::Bool=false,
                      turnable::Bool=false,
-                     passable::Bool=false,
-                     grabable::Bool=false
-                     ) = new(moveable,turnable,passable,grabable)
+                     grabable::Bool=false,
+                     layer::Int=1
+                     ) = new(moveable,turnable,grabable,layer)
 end
+
 """
     Actor(actor_definition::Actor_Definition,location::Location,orientation::Orientation)
 
@@ -315,13 +322,9 @@ end
 
 function actor_validate_location_move(wo::World,a_def::Actor_Definition,lo::Location)
     # Check if actors already exist at this location
-    # One marke passable is ok
-    ac_at_lo = get_actors_at_location(wo,lo)
-    if length(ac_at_lo) > 1
+    ac_at_lo = get_actors_at_location_on_layer(wo,lo,a_def.layer)
+    if length(ac_at_lo) > 0
         throw(LocationFullError())
-    end
-    if length(ac_at_lo) == 1 && !ac_at_lo[1].actor_definition.passable && !a_def.passable
-        throw(ActorNotPassableError())
     end
     # Check if the position is within the world
     if !location_within_world(wo,lo)
@@ -348,6 +351,15 @@ Return a list of actors at `lo`. If no actor is at `lo` return `[]`.
 """
 function get_actors_at_location(wo::World,lo::Location)
     filter(a->a.location == lo,wo.actors)
+end
+
+"""
+    get_actors_at_location_on_layer(wo::World,lo::Location,layer::Int)
+
+Return a list of actors at `lo` on `layer`. If no actor is at `lo` return `[]`.
+"""
+function get_actors_at_location_on_layer(wo::World,lo::Location,layer::Int)
+    filter(a->a.location == lo && a.actor_definition.layer == layer,wo.actors)
 end
 
 function actor_definition_at_location(wo::World,lo::Location,acd::Actor_Definition)
@@ -416,17 +428,11 @@ function actor_move!(wo::World,ac::Actor,direction::Symbol,parent::Bool=true)
     new_lo = location_move(ac.location,Orientation(direction))
     new_lo = location_fix_ooBound(wo,new_lo)
 
-    for a in get_actors_at_location(wo,new_lo)
-        if a.actor_definition.moveable && !a.actor_definition.passable
-            if !parent
-                throw(ActorInvalidMultipleMovementError())
-            end
-            actor_move!(wo,a,direction,false)
-        elseif a.actor_definition.passable
-            continue
-        else
-            throw(ActorNotPassableError())
+    for a in get_actors_at_location_on_layer(wo,new_lo,ac.actor_definition.layer)
+        if a.actor_definition.moveable && !parent
+            throw(ActorInvalidMultipleMovementError())
         end
+        actor_move!(wo,a,direction,false)
     end
     ac.location = new_lo
 end
@@ -436,16 +442,16 @@ end
     actor_pickup!(wo::World,ac::Actor)
 
 Remove an `grabable` actor from the same location `ac` is at.
+Only elements one layer beneath the actors can be picked up.
 """
 function actor_pickup!(wo::World,ac::Actor)
-    actrs = get_actors_at_location(wo,ac.location)
-    if length(actrs) == 1
+    actrs = get_actors_at_location_on_layer(wo,ac.location,ac.actor_definition.layer-1)
+    if length(actrs) == 0
         throw(ActorGrabNotFoundError())
     end
-    if length(actrs) > 2
+    if length(actrs) > 1
         throw(WorldCorruptError())
     end
-    filter!(a->a!=ac,actrs)
     if !actrs[1].actor_definition.grabable
         throw(ActorInvalidGrabError())
     end
@@ -459,9 +465,8 @@ Create an actor of type `acd_put` at `ac`'s location with `ac`'s orientation.
 Only works if `acd_put` has `grabable=true`.
 """ 
 function actor_putdown!(wo::World,ac::Actor,acd_put::Actor_Definition)
-    if !acd_put.grabable
-        throw(ActorInvalidGrabError())
-    end
+    !acd_put.grabable && throw(ActorInvalidGrabError())
+    !(acd_put.layer + 1 == ac.actor_definition.layer) && throw(ActorNotPlaceableError())
     actor_create!(wo,acd_put,ac.location,ac.orientation)
 end
 

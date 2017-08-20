@@ -378,9 +378,9 @@ function kara_world_draw(wo::World_GUI)
         gr = grid_generate(wo)
         grid_draw(gr,ctx)
         # Draw Actors
-        # Sort by passable. This way all passable objects are drawn
+        # Sort by layer
         # first and thus are displayed on the bottom layer
-        for ac in sort(wo.world.actors,by=a->a.actor_definition.passable,rev=true)
+        for ac in sort(wo.world.actors,by=a->a.actor_definition.layer)
             if ac.actor_definition == Kara_noGUI.ACTOR_DEFINITIONS[:kara]
                 set_source_rgb(ctx,0,0,0)
                 symbol_triangle(gr,ctx,
