@@ -46,24 +46,60 @@ import .Kara_noGUI:World,
     get_kara,
     world_export
 
+import Base.reset
+
 mutable struct World_GUI
     world::World
     canvas::Gtk.GtkCanvas
+    saved_world::World
+    drawing_delay::Float64
 end
 
 function world_redraw(wo::World_GUI)
     draw(wo.canvas)
     reveal(wo.canvas)
+    sleep(wo.drawing_delay/1000)
 end
 
 function World(height::Int,width::Int,name::AbstractString)
     world = World(height,width)
-    window,canvas = world_init(name)
+    builder,window,canvas = world_init(name)
     show(canvas)
-    world_gui = World_GUI(world,canvas)
+    world_gui = World_GUI(
+        world,
+        canvas,
+        Kara_noGUI.world_export(world),
+        0,
+    )
     kara_world_draw(world_gui)
     reveal(canvas)
+    gtk_create_callback(builder,world_gui)
     return world_gui
+end
+
+function gtk_create_callback(b,wo::World_GUI)
+    signal_connect(
+        wrap_slider_value_changed_callback(wo),
+        b["adj_speed"],
+        "value-changed"
+    )
+    signal_connect(
+        wrap_toolbar_btn_reset_callback(wo),
+        b["toolbar_btn_reset"],
+        "clicked"
+    )
+end
+
+function wrap_slider_value_changed_callback(wo::World_GUI)
+    function(widget)
+        wo.drawing_delay = getproperty(widget,:value,Float64)
+    end
+end
+
+function wrap_toolbar_btn_reset_callback(wo::World_GUI)
+    function(widget)
+        reset(wo)
+    end
 end
 
 function kara_world_draw(wo::World_GUI)
@@ -263,6 +299,7 @@ function load_world(path::AbstractString,name::AbstractString)
     loaded_wo = Kara_noGUI.load_world(path)
     wo = World(loaded_wo.size.width,loaded_wo.size.height,name)
     wo.world = loaded_wo
+    wo.saved_world = copy(loaded_wo)
     world_redraw(wo)
     return wo
 end
@@ -278,6 +315,10 @@ function reset(wo::World_GUI,woi::World)
     wo.world = woi
     world_redraw(wo)
     nothing
+end
+
+function reset(wo::World_GUI)
+    reset(wo,wo.saved_world)
 end
 
 end

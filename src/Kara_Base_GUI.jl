@@ -45,7 +45,7 @@ function world_init(title::AbstractString)
     push!(fc,c)
     win = b["win_main"]
     showall(win)
-    return win,c
+    return b,win,c
 end
 
 function symbol_triangle(gr::Grid,ctx::Gtk.CairoContext,x::Int,y::Int,angle::T) where T <: Real
