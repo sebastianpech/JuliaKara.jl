@@ -88,6 +88,31 @@ function gtk_create_callback(b,wo::World_GUI)
         b["toolbar_btn_reset"],
         "clicked"
     )
+    signal_connect(
+        wrap_button_down_callback(wo,b),
+        b["frame_canvas"],
+        "button-release-event"
+    )
+    signal_connect(
+        wrap_button_edit_tree(wo,b),
+        b["edit_btn_tree"],
+        "toggled"
+    )
+    signal_connect(
+        wrap_button_edit_mushroom(wo,b),
+        b["edit_btn_mushroom"],
+        "toggled"
+    )
+    signal_connect(
+        wrap_button_edit_leaf(wo,b),
+        b["edit_btn_leaf"],
+        "toggled"
+    )
+    signal_connect(
+        wrap_button_edit_kara(wo,b),
+        b["edit_btn_kara"],
+        "toggled"
+    )
 end
 
 function wrap_slider_value_changed_callback(wo::World_GUI)
@@ -102,6 +127,71 @@ function wrap_toolbar_btn_reset_callback(wo::World_GUI)
     end
 end
 
+function wrap_button_down_callback(wo::World_GUI,b)
+    ctxid = Gtk.context_id(b["statusbar"], "Kara")
+    function(widget,event)
+        x,y = Kara_Base_GUI.grid_coordinate_virt(
+            grid_generate(wo),
+            event.x,event.y
+        )
+    end
+end
+
+function wrap_button_edit_tree(wo::World_GUI,b)
+    ctxid = Gtk.context_id(b["statusbar"], "Kara")
+    function (widget)
+        push!(b["statusbar"],ctxid,"[Edit] Tree")
+    end
+end
+
+function wrap_button_edit_mushroom(wo::World_GUI,b)
+    ctxid = Gtk.context_id(b["statusbar"], "Kara")
+    function (widget)
+        push!(b["statusbar"],ctxid,"[Edit] Mushroom")
+    end
+end
+
+function wrap_button_edit_leaf(wo::World_GUI,b)
+    ctxid = Gtk.context_id(b["statusbar"], "Kara")
+    function (widget)
+        push!(b["statusbar"],ctxid,"[Edit] Leaf")
+    end
+end
+
+function wrap_button_edit_kara(wo::World_GUI,b)
+    ctxid = Gtk.context_id(b["statusbar"], "Kara")
+    function (widget)
+        push!(b["statusbar"],ctxid,"[Edit] Kara")
+    end
+end
+
+function grid_generate(wo::World_GUI)
+    # Calculate grid size to ensure that every field is quadratic
+    #
+    # Available dimensions:
+    avail_w = width(wo.canvas)-20
+    avail_h = height(wo.canvas)-20
+    # Needed dimensions
+    needed_cell_width = avail_w/wo.world.size.width
+    needed_cell_height = avail_h/wo.world.size.height
+    # Decisive dimension
+    needed_cell_dim = min(needed_cell_width,needed_cell_height)
+    # Grid height and width
+    grid_width = needed_cell_dim * wo.world.size.width
+    grid_height = needed_cell_dim * wo.world.size.height
+    # Grid coordinates
+    grid_x = (width(wo.canvas)-grid_width)/2
+    grid_y = (height(wo.canvas)-grid_height)/2
+    # Construct grid
+    Kara_Base_GUI.Grid(grid_x,
+                       grid_y,
+                       grid_width,
+                       grid_height,
+                       wo.world.size.width,
+                       wo.world.size.height
+                       )
+end
+
 function kara_world_draw(wo::World_GUI)
     @guarded draw(wo.canvas) do widget
         ctx = getgc(wo.canvas)
@@ -109,31 +199,8 @@ function kara_world_draw(wo::World_GUI)
         set_source_rgb(ctx,0.85,0.85,0.85)
         paint(ctx)
         # Draw Grid
-        # Calculate grid size to ensure that every field is quadratic
-        #
-        # Available dimensions:
-        avail_w = width(wo.canvas)-20
-        avail_h = height(wo.canvas)-20
-        # Needed dimensions
-        needed_cell_width = avail_w/wo.world.size.width
-        needed_cell_height = avail_h/wo.world.size.height
-        # Decisive dimension
-        needed_cell_dim = min(needed_cell_width,needed_cell_height)
-        # Grid height and width
-        grid_width = needed_cell_dim * wo.world.size.width
-        grid_height = needed_cell_dim * wo.world.size.height
-        # Grid coordinates
-        grid_x = (width(wo.canvas)-grid_width)/2
-        grid_y = (height(wo.canvas)-grid_height)/2
-        # Construct grid
-        gr = Kara_Base_GUI.Grid(grid_x,
-                                  grid_y,
-                                  grid_width,
-                                  grid_height,
-                                  wo.world.size.width,
-                                  wo.world.size.height
-                                  )
         set_source_rgb(ctx,1,1,1) # Black
+        gr = grid_generate(wo)
         grid_draw(gr,ctx)
         # Draw Actors
         # Sort by passable. This way all passable objects are drawn

@@ -61,7 +61,7 @@
                         <property name="can_focus">False</property>
                         <property name="label" translatable="yes">Elements</property>
                         <child>
-                          <object class="GtkToolButton" id="edit_btn_tree">
+                          <object class="GtkToggleToolButton" id="edit_btn_tree">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="label" translatable="yes">Tree</property>
@@ -69,7 +69,7 @@
                           </object>
                         </child>
                         <child>
-                          <object class="GtkToolButton" id="edit_btn_mushroom">
+                          <object class="GtkToggleToolButton" id="edit_btn_mushroom">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="label" translatable="yes">Mushroom</property>
@@ -80,7 +80,7 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkToolButton" id="edit_btn_leaf">
+                          <object class="GtkToggleToolButton" id="edit_btn_leaf">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="label" translatable="yes">Leaf</property>
@@ -91,7 +91,7 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkToolButton" id="edit_btn_kara">
+                          <object class="GtkToggleToolButton" id="edit_btn_kara">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="label" translatable="yes">Kara</property>
