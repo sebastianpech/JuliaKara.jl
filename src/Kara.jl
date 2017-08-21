@@ -55,10 +55,10 @@ mutable struct World_GUI
     drawing_delay::Float64
     edit_mode::Symbol
     drag_mode::Bool
-    drag_handler::UInt64
+    drag_handler::Culong
     drag_actor::Any
     World_GUI(world,canvas,saved_world,drawing_delay) = begin
-        new(world,canvas,saved_world,drawing_delay,:none,false,UInt64(0),nothing)
+        new(world,canvas,saved_world,drawing_delay,:none,false,Culong(0),nothing)
     end
 end
 
@@ -108,13 +108,13 @@ function gtk_create_callback(b,wo::World_GUI,canvas)
         "clicked"
     )
     signal_connect(
-        wrap_button_down_callback(wo,b),
-        b["frame_canvas"],
+        wrap_button_down_callback(wo,b,canvas),
+        canvas,
         "button-press-event"
     )
     signal_connect(
-        wrap_button_release_callback(wo,b),
-        b["frame_canvas"],
+        wrap_button_release_callback(wo,b,canvas),
+        canvas,
         "button-release-event"
     )
     # LEAVE Events apparently dont occour when added to the frame
@@ -122,7 +122,7 @@ function gtk_create_callback(b,wo::World_GUI,canvas)
     # to the canvas.
     add_events(canvas,Gtk.GdkEventMask.LEAVE_NOTIFY)
     signal_connect(
-        wrap_leave_canvas_callback(wo,b),
+        wrap_leave_canvas_callback(wo,b,canvas),
         canvas,
         "leave-notify-event"
     )
@@ -198,7 +198,7 @@ function wrap_toolbar_btn_save_callback(wo::World_GUI,b)
     end
 end
 
-function wrap_button_down_callback(wo::World_GUI,b)
+function wrap_button_down_callback(wo::World_GUI,b,canvas)
     ctxid = Gtk.context_id(b["statusbar"], "Kara")
     function (widget,event)
         if wo.edit_mode==:none
@@ -213,7 +213,7 @@ function wrap_button_down_callback(wo::World_GUI,b)
             if length(actors_at_field) > 0
                 wo.drag_handler = signal_connect(
                     wrap_actor_drag(wo,actors_at_field[1],b),
-                    b["frame_canvas"],
+                    canvas,
                     "motion-notify-event"
                 )
                 wo.drag_mode = true
@@ -255,21 +255,21 @@ function wrap_actor_drag(wo::World_GUI,ac::Kara_noGUI.Actor,b)
     end
 end
 
-function wrap_leave_canvas_callback(wo::World_GUI,b)
+function wrap_leave_canvas_callback(wo::World_GUI,b,canvas)
     function (widget,event)
         if wo.drag_mode
             signal_handler_disconnect(
-                b["frame_canvas"],
+                canvas,
                 wo.drag_handler
             )
-            wo.drag_handler = UInt64(0)
+            wo.drag_handler = Culong(0)
             wo.drag_mode = false
             world_redraw(wo)
         end
     end
 end
 
-function wrap_button_release_callback(wo::World_GUI,b)
+function wrap_button_release_callback(wo::World_GUI,b,canvas)
     ctxid = Gtk.context_id(b["statusbar"], "Kara")
     function(widget,event)
         if wo.edit_mode != :none
@@ -306,10 +306,10 @@ function wrap_button_release_callback(wo::World_GUI,b)
         elseif wo.drag_mode
             try
                 signal_handler_disconnect(
-                    b["frame_canvas"],
+                    canvas,
                     wo.drag_handler
                 )
-                wo.drag_handler = UInt64(0)
+                wo.drag_handler = Culong(0)
                 wo.drag_mode = false
 
                 x,y = Kara_Base_GUI.grid_coordinate_virt(
