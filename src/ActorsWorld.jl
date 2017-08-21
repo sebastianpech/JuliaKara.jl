@@ -20,6 +20,7 @@ export
     get_actors_at_location,
     location_move,
     location_fix_ooBound,
+    location_within_world,
     wrap_actor_move,
     wrap_actor_rotate,
     wrap_actor_putdown,

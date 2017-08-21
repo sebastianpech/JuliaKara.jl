@@ -226,32 +226,34 @@ end
 
 function wrap_actor_drag(wo::World_GUI,ac::Kara_noGUI.Actor,b)
     function(widget,event)
-        world_redraw(wo,true)
         ctx = getgc(wo.canvas)
         gr = grid_generate(wo)
         x,y = Kara_Base_GUI.grid_coordinate_virt(
             gr,
             event.x,event.y
         )
-        if ac.actor_definition == Kara_noGUI.ACTOR_DEFINITIONS[:kara]
-            set_source_rgb(ctx,0,0,0)
-            symbol_triangle(gr,ctx,
-                            x,
-                            y,
-                            orientation_to_rad(ac.orientation)-π/2)
-        elseif ac.actor_definition == Kara_noGUI.ACTOR_DEFINITIONS[:mushroom]
-            set_source_rgb(ctx,1,0,0)
-            symbol_circle(gr,ctx,x,y)
-        elseif ac.actor_definition == Kara_noGUI.ACTOR_DEFINITIONS[:tree]
-            set_source_rgb(ctx,0.5,0.3,0)
-            symbol_circle(gr,ctx,x,y)
-        elseif ac.actor_definition == Kara_noGUI.ACTOR_DEFINITIONS[:leaf]
-            set_source_rgb(ctx,0,0.5,0)
-            symbol_star(gr,ctx,x,y)
-        else
-            error("Missing actor definition, cant draw shape.")
+        if Kara_noGUI.location_within_world(wo.world,Kara_noGUI.Location(x,y))
+            world_redraw(wo,true)
+            if ac.actor_definition == Kara_noGUI.ACTOR_DEFINITIONS[:kara]
+                set_source_rgb(ctx,0,0,0)
+                symbol_triangle(gr,ctx,
+                                x,
+                                y,
+                                orientation_to_rad(ac.orientation)-π/2)
+            elseif ac.actor_definition == Kara_noGUI.ACTOR_DEFINITIONS[:mushroom]
+                set_source_rgb(ctx,1,0,0)
+                symbol_circle(gr,ctx,x,y)
+            elseif ac.actor_definition == Kara_noGUI.ACTOR_DEFINITIONS[:tree]
+                set_source_rgb(ctx,0.5,0.3,0)
+                symbol_circle(gr,ctx,x,y)
+            elseif ac.actor_definition == Kara_noGUI.ACTOR_DEFINITIONS[:leaf]
+                set_source_rgb(ctx,0,0.5,0)
+                symbol_star(gr,ctx,x,y)
+            else
+                error("Missing actor definition, cant draw shape.")
+            end
+            reveal(widget)
         end
-        reveal(widget)
     end
 end
 
@@ -273,35 +275,42 @@ function wrap_button_release_callback(wo::World_GUI,b,canvas)
     ctxid = Gtk.context_id(b["statusbar"], "Kara")
     function(widget,event)
         if wo.edit_mode != :none
-            x,y = Kara_Base_GUI.grid_coordinate_virt(
-                grid_generate(wo),
-                event.x,event.y
-            )
-            actors_at_field = Kara_noGUI.ActorsWorld.get_actors_at_location(
-                wo.world,
-                Kara_noGUI.Location(x,y)
-            )
-            # In case one of the acors at x,y is of the same type as the editing
-            # type, delete it. Else just proceed
-            for ac in actors_at_field
-                if ac.actor_definition == Kara_noGUI.ACTOR_DEFINITIONS[wo.edit_mode]
-                    Kara_noGUI.ActorsWorld.actor_delete!(
-                        wo.world,
-                        ac
-                    )
-                    world_redraw(wo,true)
-                    return nothing
-                end
-            end
-            Kara_noGUI.actor_create!(
-                wo.world,
-                Kara_noGUI.ACTOR_DEFINITIONS[wo.edit_mode],
-                Kara_noGUI.Location(x,y),
-                Kara_noGUI.Orientation(
-                    Kara_noGUI.ActorsWorld.DIRECTIONS[1]
+            try
+                x,y = Kara_Base_GUI.grid_coordinate_virt(
+                    grid_generate(wo),
+                    event.x,event.y
                 )
-            )
-            world_redraw(wo,true)
+                actors_at_field = Kara_noGUI.ActorsWorld.get_actors_at_location(
+                    wo.world,
+                    Kara_noGUI.Location(x,y)
+                )
+                # In case one of the acors at x,y is of the same type as the editing
+                # type, delete it. Else just proceed
+                for ac in actors_at_field
+                    if ac.actor_definition == Kara_noGUI.ACTOR_DEFINITIONS[wo.edit_mode]
+                        Kara_noGUI.ActorsWorld.actor_delete!(
+                            wo.world,
+                            ac
+                        )
+                        world_redraw(wo,true)
+                        return nothing
+                    end
+                end
+                Kara_noGUI.actor_create!(
+                    wo.world,
+                    Kara_noGUI.ACTOR_DEFINITIONS[wo.edit_mode],
+                    Kara_noGUI.Location(x,y),
+                    Kara_noGUI.Orientation(
+                        Kara_noGUI.ActorsWorld.DIRECTIONS[1]
+                    )
+                )
+                world_redraw(wo,true)
+            catch e
+                # Only catch known errors
+                if !(e == Kara_noGUI.LocationFullError() || e == Kara_noGUI.LocationOutsideError())
+                    throw(e)
+                end    
+            end
             return nothing
         elseif wo.drag_mode
             try

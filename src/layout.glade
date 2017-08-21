@@ -11,7 +11,7 @@
     <property name="can_focus">False</property>
     <property name="default_width">440</property>
     <property name="default_height">460</property>
-    <property name="icon_name">Kara</property>
+    <property name="icon_name">system-run</property>
     <child>
       <object class="GtkBox">
         <property name="visible">True</property>
@@ -198,7 +198,7 @@
         </child>
       </object>
     </child>
-    <child type="titlebar">
+    <child>
       <placeholder/>
     </child>
   </object>
