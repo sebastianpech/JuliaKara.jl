@@ -600,7 +600,7 @@ get_kara(wo::World_GUI) = get_kara(wo.world)
 store(wo::World_GUI) = world_export(wo.world)
 
 function reset(wo::World_GUI,woi::World)
-    wo.world = woi
+    wo.world = copy(woi)
     world_redraw(wo,true)
     nothing
 end
