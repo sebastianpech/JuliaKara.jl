@@ -30,6 +30,7 @@
                   <object class="GtkFrame" id="frame_canvas">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
+                    <property name="events">GDK_LEAVE_NOTIFY_MASK | GDK_STRUCTURE_MASK</property>
                     <property name="label_xalign">0</property>
                     <property name="shadow_type">none</property>
                     <child>

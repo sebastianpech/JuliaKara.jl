@@ -82,11 +82,11 @@ function World(height::Int,width::Int,name::AbstractString)
     )
     kara_world_draw(world_gui)
     reveal(canvas)
-    gtk_create_callback(builder,world_gui)
+    gtk_create_callback(builder,world_gui,canvas)
     return world_gui
 end
 
-function gtk_create_callback(b,wo::World_GUI)
+function gtk_create_callback(b,wo::World_GUI,canvas)
     signal_connect(
         wrap_slider_value_changed_callback(wo),
         b["adj_speed"],
@@ -116,6 +116,15 @@ function gtk_create_callback(b,wo::World_GUI)
         wrap_button_release_callback(wo,b),
         b["frame_canvas"],
         "button-release-event"
+    )
+    # LEAVE Events apparently dont occour when added to the frame
+    # containing the canvas. Therefore the event is added directly
+    # to the canvas.
+    add_events(canvas,Gtk.GdkEventMask.LEAVE_NOTIFY)
+    signal_connect(
+        wrap_leave_canvas_callback(wo,b),
+        canvas,
+        "leave-notify-event"
     )
     signal_connect(
         wrap_button_edit_tree(wo,b),
@@ -192,24 +201,26 @@ end
 function wrap_button_down_callback(wo::World_GUI,b)
     ctxid = Gtk.context_id(b["statusbar"], "Kara")
     function (widget,event)
-        x,y = Kara_Base_GUI.grid_coordinate_virt(
-            grid_generate(wo),
-            event.x,event.y
-        )
-        actors_at_field = Kara_noGUI.ActorsWorld.get_actors_at_location(
-            wo.world,
-            Kara_noGUI.Location(x,y)
-        )
-        if length(actors_at_field) > 0
-            wo.drag_handler = signal_connect(
-                wrap_actor_drag(wo,actors_at_field[1],b),
-                b["frame_canvas"],
-                "motion-notify-event"
+        if wo.edit_mode==:none
+            x,y = Kara_Base_GUI.grid_coordinate_virt(
+                grid_generate(wo),
+                event.x,event.y
             )
-            wo.drag_mode = true
-            wo.drag_actor = actors_at_field[1]
+            actors_at_field = Kara_noGUI.ActorsWorld.get_actors_at_location(
+                wo.world,
+                Kara_noGUI.Location(x,y)
+            )
+            if length(actors_at_field) > 0
+                wo.drag_handler = signal_connect(
+                    wrap_actor_drag(wo,actors_at_field[1],b),
+                    b["frame_canvas"],
+                    "motion-notify-event"
+                )
+                wo.drag_mode = true
+                wo.drag_actor = actors_at_field[1]
+            end
+            return nothing
         end
-        return nothing
     end
 end
 
@@ -241,6 +252,20 @@ function wrap_actor_drag(wo::World_GUI,ac::Kara_noGUI.Actor,b)
             error("Missing actor definition, cant draw shape.")
         end
         reveal(widget)
+    end
+end
+
+function wrap_leave_canvas_callback(wo::World_GUI,b)
+    function (widget,event)
+        if wo.drag_mode
+            signal_handler_disconnect(
+                b["frame_canvas"],
+                wo.drag_handler
+            )
+            wo.drag_handler = UInt64(0)
+            wo.drag_mode = false
+            world_redraw(wo)
+        end
     end
 end
 
@@ -279,28 +304,36 @@ function wrap_button_release_callback(wo::World_GUI,b)
             world_redraw(wo,true)
             return nothing
         elseif wo.drag_mode
-            signal_handler_disconnect(
-                b["frame_canvas"],
-                wo.drag_handler
-            )
-            wo.drag_handler = UInt64(0)
-
-            x,y = Kara_Base_GUI.grid_coordinate_virt(
-                grid_generate(wo),
-                event.x,event.y
-            )
-            actors_at_field = Kara_noGUI.ActorsWorld.get_actors_at_location(
-                wo.world,
-                Kara_noGUI.Location(x,y)
-            )
-
-            Kara_noGUI.actor_moveto!(
-                wo.world,
-                wo.drag_actor,
-                Kara_noGUI.Location(
-                    x,y
+            try
+                signal_handler_disconnect(
+                    b["frame_canvas"],
+                    wo.drag_handler
                 )
-            )
+                wo.drag_handler = UInt64(0)
+                wo.drag_mode = false
+
+                x,y = Kara_Base_GUI.grid_coordinate_virt(
+                    grid_generate(wo),
+                    event.x,event.y
+                )
+                actors_at_field = Kara_noGUI.ActorsWorld.get_actors_at_location(
+                    wo.world,
+                    Kara_noGUI.Location(x,y)
+                )
+
+                Kara_noGUI.actor_moveto!(
+                    wo.world,
+                    wo.drag_actor,
+                    Kara_noGUI.Location(
+                        x,y
+                    )
+                )
+            catch e
+                # Only catch known errors
+                if !(e == Kara_noGUI.LocationFullError() || e == Kara_noGUI.LocationOutsideError())
+                    throw(e)
+                end
+            end
 
             world_redraw(wo,true)
         end
@@ -311,7 +344,7 @@ end
 function wrap_button_edit_tree(wo::World_GUI,b)
     ctxid = Gtk.context_id(b["statusbar"], "Kara")
     function (widget)
-        push!(b["statusbar"],ctxid,"[Edit] Tree")
+        push!(b["statusbar"],ctxid,"[Edit] Tree. <ESC> to leave.")
         wo.edit_mode = :tree
     end
 end
@@ -319,7 +352,7 @@ end
 function wrap_button_edit_mushroom(wo::World_GUI,b)
     ctxid = Gtk.context_id(b["statusbar"], "Kara")
     function (widget)
-        push!(b["statusbar"],ctxid,"[Edit] Mushroom")
+        push!(b["statusbar"],ctxid,"[Edit] Mushroom. <ESC> to leave.")
         wo.edit_mode = :mushroom
     end
 end
@@ -327,7 +360,7 @@ end
 function wrap_button_edit_leaf(wo::World_GUI,b)
     ctxid = Gtk.context_id(b["statusbar"], "Kara")
     function (widget)
-        push!(b["statusbar"],ctxid,"[Edit] Leaf")
+        push!(b["statusbar"],ctxid,"[Edit] Leaf. <ESC> to leave.")
         wo.edit_mode = :leaf
     end
 end
@@ -336,7 +369,7 @@ function wrap_button_edit_kara(wo::World_GUI,b)
     ctxid = Gtk.context_id(b["statusbar"], "Kara")
     function (widget)
         wo.edit_mode = :kara
-        push!(b["statusbar"],ctxid,"[Edit] Kara")
+        push!(b["statusbar"],ctxid,"[Edit] Kara. <ESC> to leave.")
     end
 end
 
@@ -381,6 +414,10 @@ function kara_world_draw(wo::World_GUI)
         # Sort by layer
         # first and thus are displayed on the bottom layer
         for ac in sort(wo.world.actors,by=a->a.actor_definition.layer)
+            # Dont draw the actor if it is currently draged
+            if wo.drag_mode && wo.drag_actor === ac
+                continue
+            end
             if ac.actor_definition == Kara_noGUI.ACTOR_DEFINITIONS[:kara]
                 set_source_rgb(ctx,0,0,0)
                 symbol_triangle(gr,ctx,
