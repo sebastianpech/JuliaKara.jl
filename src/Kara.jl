@@ -520,7 +520,8 @@ macro World(definition)
                 turnLeft,
                 turnRight,
                 putLeaf,
-                removeLeaf,
+               removeLeaf,
+                onLeaf,
                 treeFront,
                 treeLeft,
                 treeRight,
@@ -540,6 +541,9 @@ macro World(definition)
             function removeLeaf(ac::Kara.Kara_noGUI.Actor)
                 removeLeaf(world,ac)
             end
+            function onLeaf(ac::Kara.Kara_noGUI.Actor)
+                onLeaf(world,ac)
+            end
             function treeFront(ac::Kara.Kara_noGUI.Actor)
                 treeFront(world,ac)
             end
@@ -552,6 +556,7 @@ macro World(definition)
             function mushroomFront(ac::Kara.Kara_noGUI.Actor)
                 mushroomFront(world,ac)
             end
+            nothing
         end
         )
 end
@@ -580,7 +585,8 @@ macro World(name,definition)
         return command
 
         end
-    end)
+        nothing
+        end)
 end
 
 function load_world(path::AbstractString,name::AbstractString)
