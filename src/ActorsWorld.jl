@@ -48,7 +48,11 @@ export
     ActorGrabNotFoundError,
     ActorNotPlaceableError,
     WorldCorrupError,
-    copy
+    copy,
+    world_state_save,
+    reset!,
+    World_State
+    
 
 abstract type AbstractActorsWorldException <: Exception end
 struct InvalidDirectionError <: AbstractActorsWorldException
@@ -488,6 +492,43 @@ end
 
 function is_actor_definition_here(wo::World,ac::Actor,acd::Actor_Definition)
     return actor_definition_at_location(wo,ac.location,acd)
+end
+
+struct World_State_Entity
+    location::Location
+    orientation::Orientation
+end
+
+struct World_State
+    actors::Dict{Actor,World_State_Entity}
+end
+
+function world_state_save(wo::World)
+    World_State(Dict([ac => World_State_Entity(
+        ac.location,
+        ac.orientation
+    ) for ac in wo.actors]))
+end
+
+function actor_reset!(ac::Actor,wse::World_State_Entity)
+    ac.location = wse.location
+    ac.orientation = wse.orientation
+    return nothing
+end
+
+function reset!(wo::World,state::World_State)
+    # Empty world
+    while length(wo.actors) > 0
+        pop!(wo.actors)
+    end
+    # Refill
+    for ac in map(state.actors) do ast
+        actor_reset!(ast.first,ast.second)
+        ast
+    end
+        push!(wo.actors,ac.first)
+    end
+    return nothing
 end
 
 end

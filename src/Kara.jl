@@ -24,8 +24,9 @@ export
     load_world,
     get_kara,
     store,
-    reset
-
+    reset!,
+    world_state_save
+    
 import .Kara_noGUI:World,
     place_kara,
     place_tree,
@@ -44,14 +45,12 @@ import .Kara_noGUI:World,
     orientation_to_rad,
     Actor,
     get_kara,
-    world_export
-
-import Base.reset
-
+    reset!
+    
 mutable struct World_GUI
     world::World
     canvas::Gtk.GtkCanvas
-    saved_world::World
+    saved_world::World_State
     drawing_delay::Float64
     edit_mode::Symbol
     drag_mode::Bool
@@ -77,7 +76,7 @@ function World(height::Int,width::Int,name::AbstractString)
     world_gui = World_GUI(
         world,
         canvas,
-        Kara_noGUI.world_export(world),
+        world_state_save(world),
         0,
     )
     kara_world_draw(world_gui)
@@ -169,7 +168,7 @@ function wrap_toolbar_btn_open_callback(wo::World_GUI,b)
         path = open_dialog("Pick a World-File", b["win_main"], ("*.world",))
         if path != ""
             wo.world = Kara_noGUI.load_world(path)
-            wo.saved_world = copy(wo.world)
+            wo.saved_world = world_state_save(wo.world)
             world_redraw(wo,true)
         end
     end
@@ -582,7 +581,7 @@ function load_world(path::AbstractString,name::AbstractString)
     loaded_wo = Kara_noGUI.load_world(path)
     wo = World(loaded_wo.size.width,loaded_wo.size.height,name)
     wo.world = loaded_wo
-    wo.saved_world = copy(loaded_wo)
+    wo.saved_world = world_state_save(wo.world)
     world_redraw(wo,true)
     return wo
 end
@@ -594,14 +593,14 @@ end
 get_kara(wo::World_GUI) = get_kara(wo.world)
 store(wo::World_GUI) = world_export(wo.world)
 
-function reset(wo::World_GUI,woi::World)
-    wo.world = copy(woi)
+function reset!(wo::World_GUI,wst::World_State)
+    reset!(wo.world,wst)
     world_redraw(wo,true)
     nothing
 end
 
-function reset(wo::World_GUI)
-    reset(wo,wo.saved_world)
+function reset!(wo::World_GUI)
+    reset!(wo,wo.saved_world)
 end
 
 end
