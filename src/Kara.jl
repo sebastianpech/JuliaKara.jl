@@ -93,11 +93,6 @@ function gtk_create_callback(b,wo::World_GUI,canvas)
         "value-changed"
     )
     signal_connect(
-        wrap_toolbar_btn_reset_callback(wo),
-        b["toolbar_btn_reset"],
-        "clicked"
-    )
-    signal_connect(
         wrap_toolbar_btn_open_callback(wo,b),
         b["toolbar_btn_open"],
         "clicked"
@@ -166,12 +161,6 @@ end
 function wrap_slider_value_changed_callback(wo::World_GUI)
     function(widget)
         wo.drawing_delay = getproperty(widget,:value,Float64)
-    end
-end
-
-function wrap_toolbar_btn_reset_callback(wo::World_GUI)
-    function(widget)
-        reset(wo)
     end
 end
 

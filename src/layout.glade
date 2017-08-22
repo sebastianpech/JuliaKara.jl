@@ -117,19 +117,6 @@
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <child>
-                  <object class="GtkToolButton" id="toolbar_btn_reset">
-                    <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">toolbutton</property>
-                    <property name="use_underline">True</property>
-                    <property name="stock_id">gtk-undelete</property>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="homogeneous">True</property>
-                  </packing>
-                </child>
-                <child>
                   <object class="GtkToolButton" id="toolbar_btn_open">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
@@ -198,7 +185,7 @@
         </child>
       </object>
     </child>
-    <child>
+    <child type="titlebar">
       <placeholder/>
     </child>
   </object>
