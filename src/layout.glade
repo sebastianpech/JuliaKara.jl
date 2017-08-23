@@ -3,7 +3,7 @@
 <interface>
   <requires lib="gtk+" version="3.20"/>
   <object class="GtkAdjustment" id="adj_speed">
-    <property name="upper">5000</property>
+    <property name="upper">500</property>
     <property name="step_increment">1</property>
     <property name="page_increment">10</property>
   </object>
@@ -154,7 +154,7 @@
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="adjustment">adj_speed</property>
-            <property name="fill_level">5000</property>
+            <property name="fill_level">500</property>
             <property name="round_digits">1</property>
             <property name="draw_value">False</property>
             <property name="value_pos">left</property>
