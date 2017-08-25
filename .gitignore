@@ -2,3 +2,4 @@
 /**/.juliahistory
 /#.gitignore#
 /*.org
+/src/test.jl

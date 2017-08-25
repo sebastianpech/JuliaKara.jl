@@ -23,7 +23,7 @@ export
     save_world,
     load_world,
     get_kara,
-    store,
+    store!,
     reset!,
     world_state_save
     
@@ -591,7 +591,10 @@ function save_world(wo::World_GUI,path::AbstractString)
 end
 
 get_kara(wo::World_GUI) = get_kara(wo.world)
-store(wo::World_GUI) = world_export(wo.world)
+
+function store!(wo::World_GUI)
+    wo.saved_world = world_state_save(wo.world)
+end
 
 function reset!(wo::World_GUI,wst::World_State)
     reset!(wo.world,wst)
