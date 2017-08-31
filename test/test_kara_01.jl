@@ -51,5 +51,10 @@ include("../src/Kara_noGUI.jl"); using .Kara_noGUI
     @test (treeLeft(wtest,kara)) == true
     @test (treeRight(wtest,kara)) == true
     @test (treeFront(wtest,kara)) == true
+    # Test get kara
+    @test get_kara(wtest) == kara
+    place_kara(wtest,10,10)
+    @test length(get_kara(wtest)) == 2
 end
+
 end
