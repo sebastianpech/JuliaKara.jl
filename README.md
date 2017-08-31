@@ -28,7 +28,7 @@ You can now use
 - `turnLeft(kara)` to turn Kara left,
 - `turnRight(kara)` to turn Kara right,
 - `putLeaf(kara)` to place a leaf beneath Kara and
-- `removeLeaf(kara)` to remove a leaf from beneath Kara,
+- `removeLeaf(kara)` to remove a leaf from beneath Kara
 
 and
 
@@ -42,13 +42,13 @@ and
 
 Kara.jl is aware of the xml syntax the original Kara uses for storing worlds.
 It's possible to open a world through the GUI, after creating a new empty world, or through the command `@World [path]`.
-In case one loads a world through the GUI and wants the above behaviour, the reference to Kara must be restored by the following:
+In case one loads a world through the GUI and wants the above behaviour, the reference to Kara must be restored by:
 
 ```jl
 kara = get_kara(world)
 ```
 
-In contrast to the original Kara, Kara.jl supports multiple worlds and multiple Karas. In case you want to reproduce the example, run it from within the test directory of Kara.jl e.g `~/.Julia/v0.6/Kara/test`.
+Kara.jl supports multiple worlds and multiple Karas. In case you want to reproduce the example, run it from within the test directory of Kara.jl e.g `~/.Julia/v0.6/Kara/test`.
 
 ```jl
 # Load the world contained in example.world.
@@ -87,9 +87,9 @@ move(w1,lara)
 - `reset!(world)`: Resets `world` to the state after loading or the last call to `store!(world)`.
 - `store!(world)`: Stores the current state of `world`.
 - `place_kara(world,X,Y,orientation)`: Places Kara in `world` at `X`, `Y` oriented `orientation`. Valid orientations are `:NORTH`, `:EAST`, `:SOUTH` and `:WEST`. `orientation` is optional and defaults to `:NORTH`.
-- `place_mushroom(world,X,Y)`: Places a mushroom at `X`, `Y`.
-- `place_tree(world,X,Y)`: Places a tree at `X`, `Y`.
-- `place_leaf(world,X,Y)`: Places a leaf at `X`, `Y`.
+- `place_mushroom(world,X,Y)`: Places a mushroom in `world` at `X`, `Y`.
+- `place_tree(world,X,Y)`: Places a tree in `world` at `X`, `Y`.
+- `place_leaf(world,X,Y)`: Places a leaf in `world` at `X`, `Y`.
 
 The above used macro for interaction e.g. `@w1` basically translate `@w1 f(args...)` to `f(w1,args...)`.
 Thus as all the above methods have `world` as their first argument they can also be called using the world macro.
