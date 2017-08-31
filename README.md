@@ -1,6 +1,7 @@
 # Kara
-
+<div align="center">
 <img src="http://imgur.com/qfHEf0E.gif" width=300 />
+</div>
 
 [![Build Status](https://travis-ci.org/sebastianpech/Kara.jl.svg?branch=master)](https://travis-ci.org/sebastianpech/Kara.jl)
 [![codecov.io](http://codecov.io/github/sebastianpech/Kara.jl/coverage.svg?branch=master)](http://codecov.io/github/sebastianpech/Kara.jl?branch=master)
