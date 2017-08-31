@@ -456,59 +456,166 @@ function kara_world_draw(wo::World_GUI)
     end
 end
 
+"""
+    place_kara(wo::World_GUI,x::Int,y::Int,direction::Symbol=:NORTH)
+
+Places kara in world `wo` at location `x`, `y` in direction `direction`.
+`direction` is either of :NORTH, :EAST, :SOUTH, :WEST.
+Returns a reference to the created object.
+
+This function is a wrapper around [`Kara_noGUI.place_kara`](@ref) to support GUI.
+"""
 function place_kara(wo::World_GUI,x::Int,y::Int,direction::Symbol=Kara_noGUI.ActorsWorld.DIRECTIONS[1])
     ac = place_kara(wo.world,x,y,direction)
     world_redraw(wo)
     return ac
 end
 
+"""
+    place_tree(wo::World_GUI,x::Int,y::Int)
+
+Places a tree in world `wo` at location `x`, `y`.
+Returns a referenc to the created object.
+
+This function is a wrapper around [`Kara_noGUI.place_tree`](@ref) to support GUI.
+"""
 function place_tree(wo::World_GUI,x::Int,y::Int)
     ac = place_tree(wo.world,x,y)
     world_redraw(wo)
     return ac
 end
 
+"""
+    place_leaf(wo::World_GUI,x::Int,y::Int)
+
+Places a leaf in world `wo` at location `x`, `y`.
+Returns a referenc to the created object.
+
+This function is a wrapper around [`Kara_noGUI.place_leaf`](@ref) to support GUI.
+"""
 function place_leaf(wo::World_GUI,x::Int,y::Int)
     ac = place_leaf(wo.world,x,y)
     world_redraw(wo)
     return ac
 end
 
+"""
+    place_mushroom(wo::World_GUI,x::Int,y::Int)
+
+Places a mushroom in world `wo` at location `x`, `y`.
+Returns a referenc to the created object.
+
+This function is a wrapper around [`Kara_noGUI.place_mushroom`](@ref) to support GUI.
+"""
 function place_mushroom(wo::World_GUI,x::Int,y::Int)
     ac = place_mushroom(wo.world,x,y)
     world_redraw(wo)
     return ac
 end
 
+"""
+    move(wo::World_GUI,ac::Actor)
+
+Moves the actor `ac` a step forward in the world `wo`.
+
+This function is a wrapper around [`Kara_noGUI.move`](@ref) to support GUI.
+"""
 function move(wo::World_GUI,ac::Actor)
     move(wo.world,ac)
     world_redraw(wo)
 end
 
+"""
+    turnLeft(wo::World_GUI,ac::Actor)
+
+Turns the actor `ac` counter clockwise.
+
+This function is a wrapper around [`Kara_noGUI.turnLeft`](@ref) to support GUI.
+"""
 function turnLeft(wo::World_GUI,ac::Actor)
     turnLeft(wo.world,ac)
     world_redraw(wo)
 end
 
+"""
+    turnRight(wo::World_GUI,ac::Actor)
+
+Turns the actor `ac` clockwise.
+
+This function is a wrapper around [`Kara_noGUI.turnRight`](@ref) to support GUI.
+"""
 function turnRight(wo::World_GUI,ac::Actor)
     turnRight(wo.world,ac)
     world_redraw(wo)
 end
 
+"""
+    removeLeaf(wo::World_GUI,ac::Actor)
+
+Removes an actor of type leaf from the location `ac` is at.
+
+This function is a wrapper around [`Kara_noGUI.removeLeaf`](@ref) to support GUI.
+"""
 function removeLeaf(wo::World_GUI,ac::Actor)
     removeLeaf(wo.world,ac)
     world_redraw(wo)
 end
 
+"""
+    putLeaf(wo::World_GUI,ac::Actor)
+
+Places an actor of type leaf the location `ac` is at.
+
+This function is a wrapper around [`Kara_noGUI.putLeaf`](@ref) to support GUI.
+"""
 function putLeaf(wo::World_GUI,ac::Actor)
     putLeaf(wo.world,ac)
     world_redraw(wo)
 end
 
+"""
+    treeLeft(wo::World_GUI,ac::Actor)
+
+Checks if there is an actor of type tree left of actor `ac`.
+
+This function is a wrapper around [`Kara_noGUI.treeLeft`](@ref) to support GUI.
+"""
 treeLeft(wo::World_GUI,ac::Actor) = treeLeft(wo.world,ac)
+
+"""
+    treeRight(wo::World_GUI,ac::Actor)
+
+Checks if there is an actor of type tree right of actor `ac`.
+
+This function is a wrapper around [`Kara_noGUI.treeRight`](@ref) to support GUI.
+"""
 treeRight(wo::World_GUI,ac::Actor) = treeRight(wo.world,ac)
+
+"""
+    treeFront(wo::World_GUI,ac::Actor)
+
+Checks if there is an actor of type tree in front of actor `ac`.
+
+This function is a wrapper around [`Kara_noGUI.treeFront`](@ref) to support GUI.
+"""
 treeFront(wo::World_GUI,ac::Actor) = treeFront(wo.world,ac)
+
+"""
+    mushroomFront(wo::World_GUI,ac::Actor)
+
+Checks if there is an actor of type mushroom in front of actor `ac`.
+
+This function is a wrapper around [`Kara_noGUI.mushroomFront`](@ref) to support GUI.
+"""
 mushroomFront(wo::World_GUI,ac::Actor) = mushroomFront(wo.world,ac)
+
+"""
+    onLeaf(wo::World_GUI,ac::Actor)
+
+Checks if there is an actor of type leaf below of actor `ac`.
+
+This function is a wrapper around [`Kara_noGUI.onLeaf`](@ref) to support GUI.
+"""
 onLeaf(wo::World_GUI,ac::Actor) = onLeaf(wo.world,ac)
 
 """
@@ -671,6 +778,20 @@ function reset!(wo::World_GUI,wst::World_State)
     nothing
 end
 
+"""
+    reset!(wo::World_GUI)
+
+Resets a world `wo` back to a given state `wo.saved_world`.
+Can be stored using `store!(wo)`.
+Loading a world from a file stores to state at time of loading.
+
+# Examples
+```julia-repl
+julia> store!(wo)
+julia> # Do something in wo
+julia> reset!(wo)
+```
+"""
 function reset!(wo::World_GUI)
     reset!(wo,wo.saved_world)
 end

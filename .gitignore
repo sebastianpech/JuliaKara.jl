@@ -3,3 +3,5 @@
 /#.gitignore#
 /*.org
 /src/test.jl
+docs/build/
+docs/site/

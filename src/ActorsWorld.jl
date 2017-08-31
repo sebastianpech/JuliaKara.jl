@@ -480,7 +480,7 @@ function actor_pickup!(wo::World,ac::Actor)
 end
 
 """
-    actor_putdown(wo::Word,ac::Actor,acd_put::Actor_Definition)
+    actor_putdown!(wo::Word,ac::Actor,acd_put::Actor_Definition)
 
 Create an actor of type `acd_put` at `ac`'s location with `ac`'s orientation.
 Only works if `acd_put` has `grabable=true`.
