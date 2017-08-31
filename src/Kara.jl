@@ -46,7 +46,14 @@ import .Kara_noGUI:World,
     Actor,
     get_kara,
     reset!
-    
+
+"""
+    World_GUI(world::World,canvas::GtkCanvas,saved_world::World_State,drawing_delay::Float64)
+
+Creates a new World with a GUI component. Contains the actual `world` the `canvas` used for drawing.
+A state `saved_world` the world can be reverted to and a `drawing_delay`.
+Is used for every GUI communication.
+"""
 mutable struct World_GUI
     world::World
     canvas::Gtk.GtkCanvas
@@ -61,6 +68,12 @@ mutable struct World_GUI
     end
 end
 
+"""
+    world_redraw(wo::World_GUI,no_delay::Bool=false)
+
+Redraws the world `wo`. If `no_delay` is `true` the delay controlled by `wo.drawing_delay`
+which controls the 
+"""
 function world_redraw(wo::World_GUI,no_delay::Bool=false)
     draw(wo.canvas)
     reveal(wo.canvas)
@@ -69,6 +82,12 @@ function world_redraw(wo::World_GUI,no_delay::Bool=false)
     end
 end
 
+"""
+    World(height::Int,width::Int,name::AbstractString)
+
+Creates a new world of size `width` x `height`. `name` is used as a title for the
+GTK window.
+"""
 function World(height::Int,width::Int,name::AbstractString)
     world = World(height,width)
     builder,window,canvas = world_init(name)
@@ -492,6 +511,32 @@ treeFront(wo::World_GUI,ac::Actor) = treeFront(wo.world,ac)
 mushroomFront(wo::World_GUI,ac::Actor) = mushroomFront(wo.world,ac)
 onLeaf(wo::World_GUI,ac::Actor) = onLeaf(wo.world,ac)
 
+"""
+    @World [name] defintion
+
+`definition` is either a `String` describing the path to a world-file which
+should be loaded or a `Tuple{Int,Int}` describing the height and the width
+of the world
+
+In case a `name` is provided (Must be a name that can be used as a variable name)
+a variable in global scope named `name` and a macro named `@name` are created
+which allow access to the world (See Examples).
+
+In case no `name` is provided the world is stored in global scope in a variable
+named `world` and kara is placed at location 1,1 and refereced with
+a global variable named `kara`. Furthermore all function used for interaction
+with kara (`move()`, `turnLeft()`, ...) are extended with methods to allow
+calls like `move(kara)`.
+
+# Examples
+```julia-repl
+julia> @World (10,10)
+julia> move(kara) # moves kara in world
+julia> @world testw (10,10)
+julia> lara = @testw place_kara()
+julia> @testw move(lara) # moves lara in testw
+```
+"""
 macro World(definition)
     esc(quote
             if typeof($definition) == String
@@ -577,6 +622,12 @@ macro World(name,definition)
         end)
 end
 
+"""
+    load_world(path::AbstractString,name::AbstractString)
+
+Loads a world-file from `path` and names the new window `name`.
+Creates a new GTK window.
+"""
 function load_world(path::AbstractString,name::AbstractString)
     loaded_wo = Kara_noGUI.load_world(path)
     wo = World(loaded_wo.size.width,loaded_wo.size.height,name)
@@ -586,12 +637,30 @@ function load_world(path::AbstractString,name::AbstractString)
     return wo
 end
 
+"""
+    save_world(wo::World_GUI,path::AbstractString)
+
+Saves a world `wo` into a world-file at `path`.
+"""
 function save_world(wo::World_GUI,path::AbstractString)
     Kara_noGUI.save_world(wo.world,path)
 end
 
 get_kara(wo::World_GUI) = get_kara(wo.world)
 
+"""
+    store!(wo::World_GUI)
+
+Stores a state of a world `wo` in `wo.saved_world`.
+Can be restored by using `reset!(wo::World)`.
+
+# Exaples
+```julia-repl
+julia> store!(wo)
+julia> # do something in wo
+julia> reset!(wo)
+```
+"""
 function store!(wo::World_GUI)
     wo.saved_world = world_state_save(wo.world)
 end

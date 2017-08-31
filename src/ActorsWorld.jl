@@ -319,12 +319,23 @@ function actor_create!(wo::World,a_def::Actor_Definition,lo::Location,or::Orient
     return ac
 end
 
+"""
+    actor_moveto!(wo::World,ac::Actor,lo::Location)
+
+Moves `ac` to `lo` after validating.
+"""
+
 function actor_moveto!(wo::World,ac::Actor,lo::Location)
     actor_validate_location_move(wo,ac.actor_definition,lo)
     ac.location = lo
     return nothing
 end
 
+"""
+    actor_validate_location_move(wo::World,a_def::Actor_Definition,lo::Location)
+
+Validate if it's possible to place an actor of type `a_def` at `lo`.
+"""
 function actor_validate_location_move(wo::World,a_def::Actor_Definition,lo::Location)
     # Check if actors already exist at this location
     ac_at_lo = get_actors_at_location_on_layer(wo,lo,a_def.layer)
@@ -367,6 +378,11 @@ function get_actors_at_location_on_layer(wo::World,lo::Location,layer::Int)
     filter(a->a.location == lo && a.actor_definition.layer == layer,wo.actors)
 end
 
+"""
+    actor_definition_at_location(wo::World,lo::Location,acd::Actor_Definition)
+
+Checks if an actor of type `acd` is at `lo` in `wo`.
+"""
 function actor_definition_at_location(wo::World,lo::Location,acd::Actor_Definition)
     for ac in get_actors_at_location(wo,lo)
         if ac.actor_definition == acd
@@ -419,6 +435,7 @@ function location_fix_ooBound(wo::World,lo::Location)
         return Location(x,y)
     end
 end
+
 """
     actor_move!(wo::World,ac::Actor,direction::Symbol[,parent::Bool])
 
@@ -441,7 +458,6 @@ function actor_move!(wo::World,ac::Actor,direction::Symbol,parent::Bool=true)
     end
     ac.location = new_lo
 end
-
 
 """
     actor_pickup!(wo::World,ac::Actor)
@@ -475,21 +491,41 @@ function actor_putdown!(wo::World,ac::Actor,acd_put::Actor_Definition)
     actor_create!(wo,acd_put,ac.location,ac.orientation)
 end
 
+"""
+    is_actor_definition_left(wo::World,ac::Actor,acd::Actor_Definition)
+
+Checks if an actor of type `acd` is left of `ac`.
+"""
 function is_actor_definition_left(wo::World,ac::Actor,acd::Actor_Definition)
     lo_left = location_move(ac.location,orientation_rotate(ac.orientation,Val{false}))
     return actor_definition_at_location(wo,lo_left,acd)
 end
 
+"""
+    is_actor_definition_right(wo::World,ac::Actor,acd::Actor_Definition)
+
+Checks if an actor of type `acd` is right of `ac`.
+"""
 function is_actor_definition_right(wo::World,ac::Actor,acd::Actor_Definition)
     lo_left = location_move(ac.location,orientation_rotate(ac.orientation,Val{true}))
     return actor_definition_at_location(wo,lo_left,acd)
 end
 
+"""
+    is_actor_definition_front(wo::World,ac::Actor,acd::Actor_Definition)
+
+Checks if an actor of type `acd` is front of `ac`.
+"""
 function is_actor_definition_front(wo::World,ac::Actor,acd::Actor_Definition)
     lo_left = location_move(ac.location,ac.orientation)
     return actor_definition_at_location(wo,lo_left,acd)
 end
 
+"""
+    is_actor_definition_here(wo::World,ac::Actor,acd::Actor_Definition)
+
+Checks if an actor of type `acd` is here of `ac`.
+"""
 function is_actor_definition_here(wo::World,ac::Actor,acd::Actor_Definition)
     return actor_definition_at_location(wo,ac.location,acd)
 end
@@ -503,6 +539,19 @@ struct World_State
     actors::Dict{Actor,World_State_Entity}
 end
 
+"""
+    world_state_save(wo::World)
+
+Conerts a world `wo` to a structure that holds all actors with their current location and orientation.
+Can be used with `reset!` to revert a world to a certain `World_State`.
+
+# Examples
+```julia-repl
+julia> ws = world_state_save(some_world)
+julia> # Do something in some_world
+julia> reset!(some_world,ws)` # World is back to the saved state
+```
+"""
 function world_state_save(wo::World)
     World_State(Dict([ac => World_State_Entity(
         ac.location,
@@ -516,6 +565,18 @@ function actor_reset!(ac::Actor,wse::World_State_Entity)
     return nothing
 end
 
+"""
+    reset!(wo::World,state::World_State)
+
+Resets a wo back to a given `state`. The state is obtained from `world_state_save`.
+
+# Examples
+```julia-repl
+julia> ws = world_state_save(some_world)
+julia> # Do something in some_world
+julia> reset!(some_world,ws)` # World is back to the saved state
+```
+"""
 function reset!(wo::World,state::World_State)
     # Empty world
     while length(wo.actors) > 0
