@@ -6,6 +6,7 @@
 [![codecov.io](http://codecov.io/github/sebastianpech/Kara.jl/coverage.svg?branch=master)](http://codecov.io/github/sebastianpech/Kara.jl?branch=master)
 
 A package that is a port of SwissEducs [Kara](http://www.swisseduc.ch/informatik/karatojava/) (Page in German).
+Kara is a concept for an easy access into the world of programming.
 Kara is a tiny ladybug (or triangle) living in a forest with mushrooms, trees and leafs.
 Kara can move a single mushroom, place and remove leafs and cannot move trees.
 In comparison to the original Kara the interaction manly focuses on using the REPL and is lacking fancy mushrooms and bugs.
