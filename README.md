@@ -41,8 +41,32 @@ and
 
 ### Alternative methods of creating/loading a world
 
-Kara.jl is aware of the xml syntax the original Kara uses for storing worlds.
-It's possible to open a world through the GUI, after creating a new empty world, or through the command `@World [path]`.
+Kara.jl is aware of the xml syntax the original Kara uses for storing worlds in files.
+It's possible to load a world through the GUI or with the command `@World [path]`.
+In contrast to the GUI version `@World [path]` opens a new window and registers `world` and `kara` in global scope as references.
+
+```jl
+@World "file1.world"
+move(kara) # moves Kara in world from file1.world
+
+@World "file2.world"
+# kara and world referencing elements from file1.world
+# are now overwritten with references to elements from file2.world
+move(kara) # moves Kara in world from file2.world
+
+# Create additional references to world and kara
+world_save = world
+kara_save = kara
+
+@World "file3.world"
+# kara and world referencing elements from file2.world
+# are now overwritten with references to elements from file3.world
+move(kara) # moves Kara in world from file3.world
+
+# Acces stored references
+move(world_save,kara_save) # moves Kara in world from file2.world
+```
+
 In case one loads a world through the GUI and wants the above behaviour, the reference to Kara must be restored by:
 
 ```jl
