@@ -66,7 +66,7 @@ Kara.jl supports multiple worlds and multiple Karas. In case you want to reprodu
 kara = @w2 place_kara(1,1)
 
 # Kara is already placed in world w1, therefore we fetch it with get_kara()
-# Since we cant create two kara references we use lara instead.
+# Since we can't create two kara references we use lara instead.
 lara = @w1 get_kara()
 
 # Move lara a step in world w1
@@ -94,7 +94,7 @@ move(w1,lara)
 
 The above used macro for interaction e.g. `@w1` basically translate `@w1 f(args...)` to `f(w1,args...)`.
 Thus as all the above methods have `world` as their first argument they can also be called using the world macro.
-This also works for custom methods like:
+This also works for custom methods:
 
 ```jl
 function turnAround(wo,ka)
