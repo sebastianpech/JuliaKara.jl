@@ -57,14 +57,16 @@ Is used for every GUI communication.
 mutable struct World_GUI
     world::World
     canvas::Gtk.GtkCanvas
+    builder::Gtk.GtkBuilder
+    window::Gtk.GtkWindow
     saved_world::World_State
     drawing_delay::Float64
     edit_mode::Symbol
     drag_mode::Bool
     drag_handler::Culong
     drag_actor::Any
-    World_GUI(world,canvas,saved_world,drawing_delay) = begin
-        new(world,canvas,saved_world,drawing_delay,:none,false,Culong(0),nothing)
+    World_GUI(world,canvas,builder,window,saved_world,drawing_delay) = begin
+        new(world,canvas,builder,window,saved_world,drawing_delay,:none,false,Culong(0),nothing)
     end
 end
 
@@ -80,6 +82,7 @@ function world_redraw(wo::World_GUI,no_delay::Bool=false)
     if !no_delay
         sleep(wo.drawing_delay/1000)
     end
+    nothing
 end
 
 """
@@ -95,6 +98,8 @@ function World(height::Int,width::Int,name::AbstractString)
     world_gui = World_GUI(
         world,
         canvas,
+        builder,
+        window,
         world_state_save(world),
         0,
     )
