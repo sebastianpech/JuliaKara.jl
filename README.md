@@ -5,6 +5,8 @@
 
 [![Build Status](https://travis-ci.org/sebastianpech/Kara.jl.svg?branch=master)](https://travis-ci.org/sebastianpech/Kara.jl)
 [![codecov.io](http://codecov.io/github/sebastianpech/Kara.jl/coverage.svg?branch=master)](http://codecov.io/github/sebastianpech/Kara.jl?branch=master)
+[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://sebastianpech.github.io/Kara.jl/stable)
+[![](https://img.shields.io/badge/docs-latest-blue.svg)](https://sebastianpech.github.io/Kara.jl/latest)
 
 A package that is a port of SwissEducs [Kara](http://www.swisseduc.ch/informatik/karatojava/) (Page in German).
 Kara is a concept for an easy access into the world of programming.
