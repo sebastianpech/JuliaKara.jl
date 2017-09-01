@@ -57,4 +57,24 @@ include("../src/Kara_noGUI.jl"); using .Kara_noGUI
     @test length(get_kara(wtest)) == 2
 end
 
+@testset "Kara Bounds" begin
+    w = World(3,3)
+    k = place_kara(w,1,1)
+    move(w,k)
+    move(w,k)
+    move(w,k)
+    @test k.location == Kara_noGUI.ActorsWorld.Location(1,1)
+    turnRight(w,k)
+    turnRight(w,k)
+    move(w,k)
+    @test k.location == Kara_noGUI.ActorsWorld.Location(1,3)
+    turnRight(w,k)
+    move(w,k)
+    @test k.location == Kara_noGUI.ActorsWorld.Location(3,3)
+    turnRight(w,k)
+    turnRight(w,k)
+    move(w,k)
+    @test k.location == Kara_noGUI.ActorsWorld.Location(1,3)
+end
+
 end

@@ -8,6 +8,9 @@ include("../src/ActorsWorld.jl"); using .ActorsWorld
         or = Orientation(ActorsWorld.DIRECTIONS[1])
         @test orientation_rotate(or,Val{true}).value == ActorsWorld.DIRECTIONS[2]
         @test orientation_rotate(or,Val{false}).value == ActorsWorld.DIRECTIONS[4]
+        @test orientation_rotate(Orientation(ActorsWorld.DIRECTIONS[2]),Val{true}).value == ActorsWorld.DIRECTIONS[3]
+        @test orientation_rotate(Orientation(ActorsWorld.DIRECTIONS[3]),Val{true}).value == ActorsWorld.DIRECTIONS[4]
+        @test orientation_rotate(Orientation(ActorsWorld.DIRECTIONS[4]),Val{true}).value == ActorsWorld.DIRECTIONS[1]
         @test_throws InvalidDirectionError Orientation(:foo)
         lo = Location(1,2)
         wo = World(10,13)
@@ -29,6 +32,10 @@ include("../src/ActorsWorld.jl"); using .ActorsWorld
         )
         wo = World(10,10)
         ac1 = actor_create!(wo,kara,Location(1,3),Orientation(ActorsWorld.DIRECTIONS[1]))
+        ac1_c = copy(ac1)
+        @test ac1_c.actor_definition == ac1.actor_definition
+        @test ac1_c.location == ac1.location
+        @test ac1_c.orientation == ac1.orientation
         @test ac1 == wo.actors[1]
         actor_delete!(wo,ac1)
         @test length(wo.actors) == 0
@@ -42,6 +49,14 @@ include("../src/ActorsWorld.jl"); using .ActorsWorld
         @test_throws LocationFullError actor_create!(wo,kara,Location(5,5),Orientation(ActorsWorld.DIRECTIONS[1]))
         actor_delete!(wo,k2)
         @test_throws ActorNotFound actor_delete!(wo,k2)
+
+        actor_moveto!(wo,ac2,Location(10,10))
+        @test ac2.location == Location(10,10)
+        actor_create!(wo,kara,Location(5,5),Orientation(ActorsWorld.DIRECTIONS[1]))
+        @test_throws LocationFullError actor_moveto!(wo,ac2,Location(5,5))
+        wo_c = copy(wo)
+        @test length(wo_c.actors) == length(wo.actors)
+        @test wo_c.size == wo.size
     end
     @testset "World Boundaries" begin
         ka = Actor_Definition(
