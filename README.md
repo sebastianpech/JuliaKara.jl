@@ -3,10 +3,10 @@
 <img src="http://imgur.com/qfHEf0E.gif" width=300 />
 </div>
 
-[![Build Status](https://travis-ci.org/sebastianpech/Kara.jl.svg?branch=master)](https://travis-ci.org/sebastianpech/Kara.jl)
-[![codecov.io](http://codecov.io/github/sebastianpech/Kara.jl/coverage.svg?branch=master)](http://codecov.io/github/sebastianpech/Kara.jl?branch=master)
-[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://sebastianpech.github.io/Kara.jl/stable)
-[![](https://img.shields.io/badge/docs-latest-blue.svg)](https://sebastianpech.github.io/Kara.jl/latest)
+[![Build Status](https://travis-ci.org/sebastianpech/JuliaKara.jl.svg?branch=master)](https://travis-ci.org/sebastianpech/JuliaKara.jl)
+[![codecov.io](http://codecov.io/github/sebastianpech/JuliaKara.jl/coverage.svg?branch=master)](http://codecov.io/github/sebastianpech/JuliaKara.jl?branch=master)
+[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://sebastianpech.github.io/JuliaKara.jl/stable)
+[![](https://img.shields.io/badge/docs-latest-blue.svg)](https://sebastianpech.github.io/JuliaKara.jl/latest)
 
 A package that is a port of SwissEducs [Kara](http://www.swisseduc.ch/informatik/karatojava/) (Page in German).
 Kara is a concept for an easy access into the world of programming.
@@ -19,12 +19,12 @@ In comparison to the original Kara the interaction manly focuses on using the RE
 The package contained in [METADATA.jl](https://github.com/JuliaLang/METADATA.jl), therefore to install run the following in Julia.
 
 ```jl
-Pkg.add("JuliaKara")
+Pkg.add("JuliaJuliaKara")
 ```
 
 ## Introduction
 
-Start using Kara.jl by opening Julia and entering `using Kara` into the REPL.
+Start using JuliaKara.jl by opening Julia and entering `using JuliaKara` into the REPL.
 Next create a new world of size 10x10 with function bindings in global scope by entering `@World (10,10)`.
 
 You can now use
@@ -44,7 +44,7 @@ and
 
 ### Alternative methods of creating/loading a world
 
-Kara.jl is aware of the xml syntax the original Kara uses for storing worlds in files.
+JuliaKara.jl is aware of the xml syntax the original Kara uses for storing worlds in files.
 It's possible to load a world through the GUI or with the command `@World [path]`.
 In contrast to the GUI version `@World [path]` opens a new window and registers `world` and `kara` in global scope as references.
 
@@ -76,7 +76,7 @@ In case one loads a world through the GUI and wants the above behaviour, the ref
 kara = get_kara(world)
 ```
 
-Kara.jl supports multiple worlds and multiple Karas. In case you want to reproduce the example, run it from within the test directory of Kara.jl e.g `~/.Julia/v0.6/Kara/test`.
+JuliaKara.jl supports multiple worlds and multiple Karas. In case you want to reproduce the example, run it from within the test directory of JuliaKara.jl e.g `~/.Julia/v0.6/JuliaKara/test`.
 
 ```jl
 # Load the world contained in example.world.
