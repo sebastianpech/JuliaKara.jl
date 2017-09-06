@@ -1,4 +1,4 @@
-# Kara
+# JuliaKara
 <div align="center">
 <img src="http://imgur.com/qfHEf0E.gif" width=300 />
 </div>
@@ -16,10 +16,10 @@ In comparison to the original Kara the interaction manly focuses on using the RE
 
 ## Installation
 
-The package is not yet contained in [METADATA.jl](https://github.com/JuliaLang/METADATA.jl), therefore to install run the following in Julia.
+The package contained in [METADATA.jl](https://github.com/JuliaLang/METADATA.jl), therefore to install run the following in Julia.
 
 ```jl
-Pkg.clone("https://github.com/sebastianpech/Kara.jl.git")
+Pkg.add("JuliaKara")
 ```
 
 ## Introduction

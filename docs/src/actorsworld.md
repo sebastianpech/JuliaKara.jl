@@ -3,7 +3,7 @@
 ## Functions
 
 ```@meta
-CurrentModule = Kara.Kara_noGUI.ActorsWorld
+CurrentModule = JuliaKara.JuliaKara_noGUI.ActorsWorld
 ```
 
 ### Basic

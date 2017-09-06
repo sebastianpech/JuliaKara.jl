@@ -1,4 +1,4 @@
-using Kara
+using JuliaKara
 @World "./intro.world"
 
 function line(kara,length::Int)

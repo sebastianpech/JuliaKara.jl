@@ -1,6 +1,6 @@
 using LightXML
 
-" Name mappings from Kara.jl to classic Kara"
+" Name mappings from JuliaKara.jl to classic Kara"
 const XML_NAMES = Dict(
     :world=> "XmlWorld",
     :tree => "XmlWallPoints",
@@ -9,7 +9,7 @@ const XML_NAMES = Dict(
     :kara => "XmlKaraList"
 )
 
-"Directions mappings from classic Kara to Kara.jl"
+"Directions mappings from classic JuliaKara to Kara.jl"
 const XML_DIR = Dict(
     0 => 1,
     1 => 4,
@@ -18,11 +18,11 @@ const XML_DIR = Dict(
 )
 
 function xml_map_direction(xml_index::Int)
-    Kara_noGUI.ActorsWorld.DIRECTIONS[XML_DIR[xml_index]]
+    JuliaKara_noGUI.ActorsWorld.DIRECTIONS[XML_DIR[xml_index]]
 end
 
 function kara_map_direction(direction::Symbol)
-    for (k,d) in enumerate(Kara_noGUI.ActorsWorld.DIRECTIONS)
+    for (k,d) in enumerate(JuliaKara_noGUI.ActorsWorld.DIRECTIONS)
         if d == direction
             for p in XML_DIR
                 if p.second == k
@@ -160,7 +160,7 @@ function xml_save_world(wo::World,path::AbstractString)
     xkara = new_child(xworld_def,XML_NAMES[:kara])
     # iterate over actors
     for ac in wo.actors
-        if ac.actor_definition == Kara_noGUI.ACTOR_DEFINITIONS[:kara]
+        if ac.actor_definition == JuliaKara_noGUI.ACTOR_DEFINITIONS[:kara]
             t = new_child(xkara,"XmlKara")
             set_attributes(t,Dict(
                 "direction" => kara_map_direction(ac.orientation.value),
@@ -168,19 +168,19 @@ function xml_save_world(wo::World,path::AbstractString)
                 "x" => kara_map_x(wo,ac.location.x) |> string,
                 "y" => kara_map_y(wo,ac.location.y) |> string
             ))
-        elseif ac.actor_definition == Kara_noGUI.ACTOR_DEFINITIONS[:mushroom]
+        elseif ac.actor_definition == JuliaKara_noGUI.ACTOR_DEFINITIONS[:mushroom]
             t = new_child(xmushroom,"XmlPoint")
             set_attributes(t,Dict(
                 "x" => kara_map_x(wo,ac.location.x) |> string,
                 "y" => kara_map_y(wo,ac.location.y) |> string
             ))
-        elseif ac.actor_definition == Kara_noGUI.ACTOR_DEFINITIONS[:tree]
+        elseif ac.actor_definition == JuliaKara_noGUI.ACTOR_DEFINITIONS[:tree]
             t = new_child(xtree,"XmlPoint")
             set_attributes(t,Dict(
                 "x" => kara_map_x(wo,ac.location.x) |> string,
                 "y" => kara_map_y(wo,ac.location.y) |> string
             ))
-        elseif ac.actor_definition == Kara_noGUI.ACTOR_DEFINITIONS[:leaf]
+        elseif ac.actor_definition == JuliaKara_noGUI.ACTOR_DEFINITIONS[:leaf]
             t = new_child(xleaf,"XmlPoint")
             set_attributes(t,Dict(
                 "type" => "0",

@@ -1,4 +1,4 @@
-module Kara_Base_GUI
+module JuliaKara_Base_GUI
 using Gtk,Gtk.ShortNames, Graphics
 
 export

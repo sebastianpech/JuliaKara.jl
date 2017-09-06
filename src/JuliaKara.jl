@@ -1,7 +1,7 @@
-module Kara
+module JuliaKara
 using Gtk.ShortNames, Graphics
-include("Kara_noGUI.jl"); using .Kara_noGUI
-include("Kara_Base_GUI.jl"); using .Kara_Base_GUI
+include("JuliaKara_noGUI.jl"); using .JuliaKara_noGUI
+include("JuliaKara_Base_GUI.jl"); using .JuliaKara_Base_GUI
 
 export
     World,
@@ -27,7 +27,7 @@ export
     reset!,
     world_state_save
     
-import .Kara_noGUI:World,
+import .JuliaKara_noGUI:World,
     place_kara,
     place_tree,
     place_leaf,
@@ -172,7 +172,7 @@ function gtk_create_callback(b,wo::World_GUI,canvas)
 end
 
 function wrap_key_press(wo::World_GUI,b)
-    ctxid = Gtk.context_id(b["statusbar"], "Kara")
+    ctxid = Gtk.context_id(b["statusbar"], "JuliaKara")
     function(widget,key)
         if key.keyval == Gtk.GdkKeySyms.Escape
             push!(b["statusbar"],ctxid,"")
@@ -191,7 +191,7 @@ function wrap_toolbar_btn_open_callback(wo::World_GUI,b)
     function(widget)
         path = open_dialog("Pick a World-File", b["win_main"], ("*.world",))
         if path != ""
-            wo.world = Kara_noGUI.load_world(path)
+            wo.world = JuliaKara_noGUI.load_world(path)
             wo.saved_world = world_state_save(wo.world)
             world_redraw(wo,true)
         end
@@ -211,16 +211,16 @@ function wrap_toolbar_btn_save_callback(wo::World_GUI,b)
 end
 
 function wrap_button_down_callback(wo::World_GUI,b,canvas)
-    ctxid = Gtk.context_id(b["statusbar"], "Kara")
+    ctxid = Gtk.context_id(b["statusbar"], "JuliaKara")
     function (widget,event)
         if wo.edit_mode==:none
-            x,y = Kara_Base_GUI.grid_coordinate_virt(
+            x,y = JuliaKara_Base_GUI.grid_coordinate_virt(
                 grid_generate(wo),
                 event.x,event.y
             )
-            actors_at_field = Kara_noGUI.ActorsWorld.get_actors_at_location(
+            actors_at_field = JuliaKara_noGUI.ActorsWorld.get_actors_at_location(
                 wo.world,
-                Kara_noGUI.Location(x,y)
+                JuliaKara_noGUI.Location(x,y)
             )
             if length(actors_at_field) > 0
                 wo.drag_handler = signal_connect(
@@ -236,29 +236,29 @@ function wrap_button_down_callback(wo::World_GUI,b,canvas)
     end
 end
 
-function wrap_actor_drag(wo::World_GUI,ac::Kara_noGUI.Actor,b)
+function wrap_actor_drag(wo::World_GUI,ac::JuliaKara_noGUI.Actor,b)
     function(widget,event)
         ctx = getgc(wo.canvas)
         gr = grid_generate(wo)
-        x,y = Kara_Base_GUI.grid_coordinate_virt(
+        x,y = JuliaKara_Base_GUI.grid_coordinate_virt(
             gr,
             event.x,event.y
         )
-        if Kara_noGUI.location_within_world(wo.world,Kara_noGUI.Location(x,y))
+        if JuliaKara_noGUI.location_within_world(wo.world,JuliaKara_noGUI.Location(x,y))
             world_redraw(wo,true)
-            if ac.actor_definition == Kara_noGUI.ACTOR_DEFINITIONS[:kara]
+            if ac.actor_definition == JuliaKara_noGUI.ACTOR_DEFINITIONS[:kara]
                 set_source_rgb(ctx,0,0,0)
                 symbol_triangle(gr,ctx,
                                 x,
                                 y,
                                 orientation_to_rad(ac.orientation)-π/2)
-            elseif ac.actor_definition == Kara_noGUI.ACTOR_DEFINITIONS[:mushroom]
+            elseif ac.actor_definition == JuliaKara_noGUI.ACTOR_DEFINITIONS[:mushroom]
                 set_source_rgb(ctx,1,0,0)
                 symbol_circle(gr,ctx,x,y)
-            elseif ac.actor_definition == Kara_noGUI.ACTOR_DEFINITIONS[:tree]
+            elseif ac.actor_definition == JuliaKara_noGUI.ACTOR_DEFINITIONS[:tree]
                 set_source_rgb(ctx,0.5,0.3,0)
                 symbol_circle(gr,ctx,x,y)
-            elseif ac.actor_definition == Kara_noGUI.ACTOR_DEFINITIONS[:leaf]
+            elseif ac.actor_definition == JuliaKara_noGUI.ACTOR_DEFINITIONS[:leaf]
                 set_source_rgb(ctx,0,0.5,0)
                 symbol_star(gr,ctx,x,y)
             else
@@ -284,23 +284,23 @@ function wrap_leave_canvas_callback(wo::World_GUI,b,canvas)
 end
 
 function wrap_button_release_callback(wo::World_GUI,b,canvas)
-    ctxid = Gtk.context_id(b["statusbar"], "Kara")
+    ctxid = Gtk.context_id(b["statusbar"], "JuliaKara")
     function(widget,event)
         if wo.edit_mode != :none
             try
-                x,y = Kara_Base_GUI.grid_coordinate_virt(
+                x,y = JuliaKara_Base_GUI.grid_coordinate_virt(
                     grid_generate(wo),
                     event.x,event.y
                 )
-                actors_at_field = Kara_noGUI.ActorsWorld.get_actors_at_location(
+                actors_at_field = JuliaKara_noGUI.ActorsWorld.get_actors_at_location(
                     wo.world,
-                    Kara_noGUI.Location(x,y)
+                    JuliaKara_noGUI.Location(x,y)
                 )
                 # In case one of the acors at x,y is of the same type as the editing
                 # type, delete it. Else just proceed
                 for ac in actors_at_field
-                    if ac.actor_definition == Kara_noGUI.ACTOR_DEFINITIONS[wo.edit_mode]
-                        Kara_noGUI.ActorsWorld.actor_delete!(
+                    if ac.actor_definition == JuliaKara_noGUI.ACTOR_DEFINITIONS[wo.edit_mode]
+                        JuliaKara_noGUI.ActorsWorld.actor_delete!(
                             wo.world,
                             ac
                         )
@@ -308,18 +308,18 @@ function wrap_button_release_callback(wo::World_GUI,b,canvas)
                         return nothing
                     end
                 end
-                Kara_noGUI.actor_create!(
+                JuliaKara_noGUI.actor_create!(
                     wo.world,
-                    Kara_noGUI.ACTOR_DEFINITIONS[wo.edit_mode],
-                    Kara_noGUI.Location(x,y),
-                    Kara_noGUI.Orientation(
-                        Kara_noGUI.ActorsWorld.DIRECTIONS[1]
+                    JuliaKara_noGUI.ACTOR_DEFINITIONS[wo.edit_mode],
+                    JuliaKara_noGUI.Location(x,y),
+                    JuliaKara_noGUI.Orientation(
+                        JuliaKara_noGUI.ActorsWorld.DIRECTIONS[1]
                     )
                 )
                 world_redraw(wo,true)
             catch e
                 # Only catch known errors
-                if !(e == Kara_noGUI.LocationFullError() || e == Kara_noGUI.LocationOutsideError())
+                if !(e == JuliaKara_noGUI.LocationFullError() || e == JuliaKara_noGUI.LocationOutsideError())
                     throw(e)
                 end    
             end
@@ -333,25 +333,25 @@ function wrap_button_release_callback(wo::World_GUI,b,canvas)
                 wo.drag_handler = Culong(0)
                 wo.drag_mode = false
 
-                x,y = Kara_Base_GUI.grid_coordinate_virt(
+                x,y = JuliaKara_Base_GUI.grid_coordinate_virt(
                     grid_generate(wo),
                     event.x,event.y
                 )
-                actors_at_field = Kara_noGUI.ActorsWorld.get_actors_at_location(
+                actors_at_field = JuliaKara_noGUI.ActorsWorld.get_actors_at_location(
                     wo.world,
-                    Kara_noGUI.Location(x,y)
+                    JuliaKara_noGUI.Location(x,y)
                 )
 
-                Kara_noGUI.actor_moveto!(
+                JuliaKara_noGUI.actor_moveto!(
                     wo.world,
                     wo.drag_actor,
-                    Kara_noGUI.Location(
+                    JuliaKara_noGUI.Location(
                         x,y
                     )
                 )
             catch e
                 # Only catch known errors
-                if !(e == Kara_noGUI.LocationFullError() || e == Kara_noGUI.LocationOutsideError())
+                if !(e == JuliaKara_noGUI.LocationFullError() || e == JuliaKara_noGUI.LocationOutsideError())
                     throw(e)
                 end
             end
@@ -363,7 +363,7 @@ function wrap_button_release_callback(wo::World_GUI,b,canvas)
 end
 
 function wrap_button_edit_tree(wo::World_GUI,b)
-    ctxid = Gtk.context_id(b["statusbar"], "Kara")
+    ctxid = Gtk.context_id(b["statusbar"], "JuliaKara")
     function (widget)
         push!(b["statusbar"],ctxid,"[Edit] Tree. <ESC> to leave.")
         wo.edit_mode = :tree
@@ -371,7 +371,7 @@ function wrap_button_edit_tree(wo::World_GUI,b)
 end
 
 function wrap_button_edit_mushroom(wo::World_GUI,b)
-    ctxid = Gtk.context_id(b["statusbar"], "Kara")
+    ctxid = Gtk.context_id(b["statusbar"], "JuliaKara")
     function (widget)
         push!(b["statusbar"],ctxid,"[Edit] Mushroom. <ESC> to leave.")
         wo.edit_mode = :mushroom
@@ -379,7 +379,7 @@ function wrap_button_edit_mushroom(wo::World_GUI,b)
 end
 
 function wrap_button_edit_leaf(wo::World_GUI,b)
-    ctxid = Gtk.context_id(b["statusbar"], "Kara")
+    ctxid = Gtk.context_id(b["statusbar"], "JuliaKara")
     function (widget)
         push!(b["statusbar"],ctxid,"[Edit] Leaf. <ESC> to leave.")
         wo.edit_mode = :leaf
@@ -387,7 +387,7 @@ function wrap_button_edit_leaf(wo::World_GUI,b)
 end
 
 function wrap_button_edit_kara(wo::World_GUI,b)
-    ctxid = Gtk.context_id(b["statusbar"], "Kara")
+    ctxid = Gtk.context_id(b["statusbar"], "JuliaKara")
     function (widget)
         wo.edit_mode = :kara
         push!(b["statusbar"],ctxid,"[Edit] Kara. <ESC> to leave.")
@@ -412,7 +412,7 @@ function grid_generate(wo::World_GUI)
     grid_x = (width(wo.canvas)-grid_width)/2
     grid_y = (height(wo.canvas)-grid_height)/2
     # Construct grid
-    Kara_Base_GUI.Grid(grid_x,
+    JuliaKara_Base_GUI.Grid(grid_x,
                        grid_y,
                        grid_width,
                        grid_height,
@@ -439,19 +439,19 @@ function kara_world_draw(wo::World_GUI)
             if wo.drag_mode && wo.drag_actor === ac
                 continue
             end
-            if ac.actor_definition == Kara_noGUI.ACTOR_DEFINITIONS[:kara]
+            if ac.actor_definition == JuliaKara_noGUI.ACTOR_DEFINITIONS[:kara]
                 set_source_rgb(ctx,0,0,0)
                 symbol_triangle(gr,ctx,
                                 ac.location.x,
                                 ac.location.y,
                                 orientation_to_rad(ac.orientation)-π/2)
-            elseif ac.actor_definition == Kara_noGUI.ACTOR_DEFINITIONS[:mushroom]
+            elseif ac.actor_definition == JuliaKara_noGUI.ACTOR_DEFINITIONS[:mushroom]
                 set_source_rgb(ctx,1,0,0)
                 symbol_circle(gr,ctx,ac.location.x,ac.location.y)
-            elseif ac.actor_definition == Kara_noGUI.ACTOR_DEFINITIONS[:tree]
+            elseif ac.actor_definition == JuliaKara_noGUI.ACTOR_DEFINITIONS[:tree]
                 set_source_rgb(ctx,0.5,0.3,0)
                 symbol_circle(gr,ctx,ac.location.x,ac.location.y)
-            elseif ac.actor_definition == Kara_noGUI.ACTOR_DEFINITIONS[:leaf]
+            elseif ac.actor_definition == JuliaKara_noGUI.ACTOR_DEFINITIONS[:leaf]
                 set_source_rgb(ctx,0,0.5,0)
                 symbol_star(gr,ctx,ac.location.x,ac.location.y)
             else
@@ -468,9 +468,9 @@ Places kara in world `wo` at location `x`, `y` in direction `direction`.
 `direction` is either of :NORTH, :EAST, :SOUTH, :WEST.
 Returns a reference to the created object.
 
-This function is a wrapper around [`Kara_noGUI.place_kara`](@ref) to support GUI.
+This function is a wrapper around [`JuliaKara_noGUI.place_kara`](@ref) to support GUI.
 """
-function place_kara(wo::World_GUI,x::Int,y::Int,direction::Symbol=Kara_noGUI.ActorsWorld.DIRECTIONS[1])
+function place_kara(wo::World_GUI,x::Int,y::Int,direction::Symbol=JuliaKara_noGUI.ActorsWorld.DIRECTIONS[1])
     ac = place_kara(wo.world,x,y,direction)
     world_redraw(wo)
     return ac
@@ -482,7 +482,7 @@ end
 Places a tree in world `wo` at location `x`, `y`.
 Returns a referenc to the created object.
 
-This function is a wrapper around [`Kara_noGUI.place_tree`](@ref) to support GUI.
+This function is a wrapper around [`JuliaKara_noGUI.place_tree`](@ref) to support GUI.
 """
 function place_tree(wo::World_GUI,x::Int,y::Int)
     ac = place_tree(wo.world,x,y)
@@ -496,7 +496,7 @@ end
 Places a leaf in world `wo` at location `x`, `y`.
 Returns a referenc to the created object.
 
-This function is a wrapper around [`Kara_noGUI.place_leaf`](@ref) to support GUI.
+This function is a wrapper around [`JuliaKara_noGUI.place_leaf`](@ref) to support GUI.
 """
 function place_leaf(wo::World_GUI,x::Int,y::Int)
     ac = place_leaf(wo.world,x,y)
@@ -510,7 +510,7 @@ end
 Places a mushroom in world `wo` at location `x`, `y`.
 Returns a referenc to the created object.
 
-This function is a wrapper around [`Kara_noGUI.place_mushroom`](@ref) to support GUI.
+This function is a wrapper around [`JuliaKara_noGUI.place_mushroom`](@ref) to support GUI.
 """
 function place_mushroom(wo::World_GUI,x::Int,y::Int)
     ac = place_mushroom(wo.world,x,y)
@@ -523,7 +523,7 @@ end
 
 Moves the actor `ac` a step forward in the world `wo`.
 
-This function is a wrapper around [`Kara_noGUI.move`](@ref) to support GUI.
+This function is a wrapper around [`JuliaKara_noGUI.move`](@ref) to support GUI.
 """
 function move(wo::World_GUI,ac::Actor)
     move(wo.world,ac)
@@ -535,7 +535,7 @@ end
 
 Turns the actor `ac` counter clockwise.
 
-This function is a wrapper around [`Kara_noGUI.turnLeft`](@ref) to support GUI.
+This function is a wrapper around [`JuliaKara_noGUI.turnLeft`](@ref) to support GUI.
 """
 function turnLeft(wo::World_GUI,ac::Actor)
     turnLeft(wo.world,ac)
@@ -547,7 +547,7 @@ end
 
 Turns the actor `ac` clockwise.
 
-This function is a wrapper around [`Kara_noGUI.turnRight`](@ref) to support GUI.
+This function is a wrapper around [`JuliaKara_noGUI.turnRight`](@ref) to support GUI.
 """
 function turnRight(wo::World_GUI,ac::Actor)
     turnRight(wo.world,ac)
@@ -559,7 +559,7 @@ end
 
 Removes an actor of type leaf from the location `ac` is at.
 
-This function is a wrapper around [`Kara_noGUI.removeLeaf`](@ref) to support GUI.
+This function is a wrapper around [`JuliaKara_noGUI.removeLeaf`](@ref) to support GUI.
 """
 function removeLeaf(wo::World_GUI,ac::Actor)
     removeLeaf(wo.world,ac)
@@ -571,7 +571,7 @@ end
 
 Places an actor of type leaf the location `ac` is at.
 
-This function is a wrapper around [`Kara_noGUI.putLeaf`](@ref) to support GUI.
+This function is a wrapper around [`JuliaKara_noGUI.putLeaf`](@ref) to support GUI.
 """
 function putLeaf(wo::World_GUI,ac::Actor)
     putLeaf(wo.world,ac)
@@ -583,7 +583,7 @@ end
 
 Checks if there is an actor of type tree left of actor `ac`.
 
-This function is a wrapper around [`Kara_noGUI.treeLeft`](@ref) to support GUI.
+This function is a wrapper around [`JuliaKara_noGUI.treeLeft`](@ref) to support GUI.
 """
 treeLeft(wo::World_GUI,ac::Actor) = treeLeft(wo.world,ac)
 
@@ -592,7 +592,7 @@ treeLeft(wo::World_GUI,ac::Actor) = treeLeft(wo.world,ac)
 
 Checks if there is an actor of type tree right of actor `ac`.
 
-This function is a wrapper around [`Kara_noGUI.treeRight`](@ref) to support GUI.
+This function is a wrapper around [`JuliaKara_noGUI.treeRight`](@ref) to support GUI.
 """
 treeRight(wo::World_GUI,ac::Actor) = treeRight(wo.world,ac)
 
@@ -601,7 +601,7 @@ treeRight(wo::World_GUI,ac::Actor) = treeRight(wo.world,ac)
 
 Checks if there is an actor of type tree in front of actor `ac`.
 
-This function is a wrapper around [`Kara_noGUI.treeFront`](@ref) to support GUI.
+This function is a wrapper around [`JuliaKara_noGUI.treeFront`](@ref) to support GUI.
 """
 treeFront(wo::World_GUI,ac::Actor) = treeFront(wo.world,ac)
 
@@ -610,7 +610,7 @@ treeFront(wo::World_GUI,ac::Actor) = treeFront(wo.world,ac)
 
 Checks if there is an actor of type mushroom in front of actor `ac`.
 
-This function is a wrapper around [`Kara_noGUI.mushroomFront`](@ref) to support GUI.
+This function is a wrapper around [`JuliaKara_noGUI.mushroomFront`](@ref) to support GUI.
 """
 mushroomFront(wo::World_GUI,ac::Actor) = mushroomFront(wo.world,ac)
 
@@ -619,7 +619,7 @@ mushroomFront(wo::World_GUI,ac::Actor) = mushroomFront(wo.world,ac)
 
 Checks if there is an actor of type leaf below of actor `ac`.
 
-This function is a wrapper around [`Kara_noGUI.onLeaf`](@ref) to support GUI.
+This function is a wrapper around [`JuliaKara_noGUI.onLeaf`](@ref) to support GUI.
 """
 onLeaf(wo::World_GUI,ac::Actor) = onLeaf(wo.world,ac)
 
@@ -654,14 +654,14 @@ macro World(definition)
             if typeof($definition) == String
                 world = load_world(
                     $definition,
-                    "Kara"
+                    "JuliaKara"
                 )
             else
-                world = World($definition...,"Kara")
+                world = World($definition...,"JuliaKara")
                 place_kara(world,1,1)
             end
             kara = get_kara(world)
-            import Kara.Kara_noGUI:move,
+            import JuliaKara.JuliaKara_noGUI:move,
                 turnLeft,
                 turnRight,
                 putLeaf,
@@ -671,34 +671,34 @@ macro World(definition)
                 treeLeft,
                 treeRight,
                 mushroomFront
-            function move(ac::Kara.Kara_noGUI.Actor)
+            function move(ac::JuliaKara.JuliaKara_noGUI.Actor)
                 move(world,ac)
             end
-            function turnLeft(ac::Kara.Kara_noGUI.Actor)
+            function turnLeft(ac::JuliaKara.JuliaKara_noGUI.Actor)
                 turnLeft(world,ac)
             end
-            function turnRight(ac::Kara.Kara_noGUI.Actor)
+            function turnRight(ac::JuliaKara.JuliaKara_noGUI.Actor)
                 turnRight(world,ac)
             end
-            function putLeaf(ac::Kara.Kara_noGUI.Actor)
+            function putLeaf(ac::JuliaKara.JuliaKara_noGUI.Actor)
                 putLeaf(world,ac)
             end
-            function removeLeaf(ac::Kara.Kara_noGUI.Actor)
+            function removeLeaf(ac::JuliaKara.JuliaKara_noGUI.Actor)
                 removeLeaf(world,ac)
             end
-            function onLeaf(ac::Kara.Kara_noGUI.Actor)
+            function onLeaf(ac::JuliaKara.JuliaKara_noGUI.Actor)
                 onLeaf(world,ac)
             end
-            function treeFront(ac::Kara.Kara_noGUI.Actor)
+            function treeFront(ac::JuliaKara.JuliaKara_noGUI.Actor)
                 treeFront(world,ac)
             end
-            function treeLeft(ac::Kara.Kara_noGUI.Actor)
+            function treeLeft(ac::JuliaKara.JuliaKara_noGUI.Actor)
                 treeLeft(world,ac)
             end
-            function treeRight(ac::Kara.Kara_noGUI.Actor)
+            function treeRight(ac::JuliaKara.JuliaKara_noGUI.Actor)
                 treeRight(world,ac)
             end
-            function mushroomFront(ac::Kara.Kara_noGUI.Actor)
+            function mushroomFront(ac::JuliaKara.JuliaKara_noGUI.Actor)
                 mushroomFront(world,ac)
             end
             nothing
@@ -741,7 +741,7 @@ Loads a world-file from `path` and names the new window `name`.
 Creates a new GTK window.
 """
 function load_world(path::AbstractString,name::AbstractString)
-    loaded_wo = Kara_noGUI.load_world(path)
+    loaded_wo = JuliaKara_noGUI.load_world(path)
     wo = World(loaded_wo.size.width,loaded_wo.size.height,name)
     wo.world = loaded_wo
     wo.saved_world = world_state_save(wo.world)
@@ -755,7 +755,7 @@ end
 Saves a world `wo` into a world-file at `path`.
 """
 function save_world(wo::World_GUI,path::AbstractString)
-    Kara_noGUI.save_world(wo.world,path)
+    JuliaKara_noGUI.save_world(wo.world,path)
 end
 
 get_kara(wo::World_GUI) = get_kara(wo.world)

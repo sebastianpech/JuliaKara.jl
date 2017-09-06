@@ -1,8 +1,8 @@
 module kara_ex01
 using Base.Test
-include("../src/Kara_noGUI.jl"); using .Kara_noGUI
+include("../src/JuliaKara_noGUI.jl"); using .JuliaKara_noGUI
 
-@testset "Kara Example 01" begin
+@testset "JuliaKara Example 01" begin
     wtest = World(10,10)
     kara = place_kara(wtest,4,4)
 
@@ -20,11 +20,11 @@ include("../src/Kara_noGUI.jl"); using .Kara_noGUI
     place_mushroom(wtest,7,5)
     place_leaf(wtest,8,5)
 
-    @test_throws Kara_noGUI.ActorInvalidMovementError move(wtest,kara)
+    @test_throws JuliaKara_noGUI.ActorInvalidMovementError move(wtest,kara)
     nextTest(wtest,kara)
-    @test_throws Kara_noGUI.ActorInvalidMovementError move(wtest,kara)
+    @test_throws JuliaKara_noGUI.ActorInvalidMovementError move(wtest,kara)
     nextTest(wtest,kara)
-    @test_throws Kara_noGUI.ActorInvalidMultipleMovementError move(wtest,kara)
+    @test_throws JuliaKara_noGUI.ActorInvalidMultipleMovementError move(wtest,kara)
     nextTest(wtest,kara)
     move(wtest,kara)
     @test (mushroomFront(wtest,kara)) == true
@@ -39,7 +39,7 @@ include("../src/Kara_noGUI.jl"); using .Kara_noGUI
     @test (onLeaf(wtest,kara)) == true
     removeLeaf(wtest,kara)
     @test (onLeaf(wtest,kara)) == false
-    @test_throws Kara_noGUI.ActorGrabNotFoundError removeLeaf(wtest,kara)
+    @test_throws JuliaKara_noGUI.ActorGrabNotFoundError removeLeaf(wtest,kara)
     putLeaf(wtest,kara)
     @test (onLeaf(wtest,kara)) == true
     @test (treeLeft(wtest,kara)) == false
@@ -57,24 +57,24 @@ include("../src/Kara_noGUI.jl"); using .Kara_noGUI
     @test length(get_kara(wtest)) == 2
 end
 
-@testset "Kara Bounds" begin
+@testset "JuliaKara Bounds" begin
     w = World(3,3)
     k = place_kara(w,1,1)
     move(w,k)
     move(w,k)
     move(w,k)
-    @test k.location == Kara_noGUI.ActorsWorld.Location(1,1)
+    @test k.location == JuliaKara_noGUI.ActorsWorld.Location(1,1)
     turnRight(w,k)
     turnRight(w,k)
     move(w,k)
-    @test k.location == Kara_noGUI.ActorsWorld.Location(1,3)
+    @test k.location == JuliaKara_noGUI.ActorsWorld.Location(1,3)
     turnRight(w,k)
     move(w,k)
-    @test k.location == Kara_noGUI.ActorsWorld.Location(3,3)
+    @test k.location == JuliaKara_noGUI.ActorsWorld.Location(3,3)
     turnRight(w,k)
     turnRight(w,k)
     move(w,k)
-    @test k.location == Kara_noGUI.ActorsWorld.Location(1,3)
+    @test k.location == JuliaKara_noGUI.ActorsWorld.Location(1,3)
 end
 
 end

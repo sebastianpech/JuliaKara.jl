@@ -1,11 +1,11 @@
 module kara_gui
 using Base.Test
-using Kara
+using JuliaKara
 
 path = joinpath(@__DIR__,"..","test","example.world")
 @World wtest (10,10)
 
-@testset "Kara Example 01" begin
+@testset "JuliaKara Example 01" begin
     
     kara = place_kara(wtest,4,4)
 
@@ -23,11 +23,11 @@ path = joinpath(@__DIR__,"..","test","example.world")
     @wtest place_mushroom(7,5)
     @wtest place_leaf(8,5)
 
-    @test_throws Kara.Kara_noGUI.ActorInvalidMovementError move(wtest,kara)
+    @test_throws JuliaKara.JuliaKara_noGUI.ActorInvalidMovementError move(wtest,kara)
     nextTest(wtest,kara)
-    @test_throws Kara.Kara_noGUI.ActorInvalidMovementError move(wtest,kara)
+    @test_throws JuliaKara.JuliaKara_noGUI.ActorInvalidMovementError move(wtest,kara)
     nextTest(wtest,kara)
-    @test_throws Kara.Kara_noGUI.ActorInvalidMultipleMovementError move(wtest,kara)
+    @test_throws JuliaKara.JuliaKara_noGUI.ActorInvalidMultipleMovementError move(wtest,kara)
     nextTest(wtest,kara)
     move(wtest,kara)
     @test (mushroomFront(wtest,kara)) == true
@@ -42,7 +42,7 @@ path = joinpath(@__DIR__,"..","test","example.world")
     @test (onLeaf(wtest,kara)) == true
     removeLeaf(wtest,kara)
     @test (onLeaf(wtest,kara)) == false
-    @test_throws Kara.Kara_noGUI.ActorGrabNotFoundError removeLeaf(wtest,kara)
+    @test_throws JuliaKara.JuliaKara_noGUI.ActorGrabNotFoundError removeLeaf(wtest,kara)
     putLeaf(wtest,kara)
     @test (onLeaf(wtest,kara)) == true
     @test (treeLeft(wtest,kara)) == false
@@ -74,10 +74,10 @@ lara = @wcompare get_kara()
     end
     # Move kara in global world using wrapper
     @test move(kara) == nothing
-    @test Kara.Kara_noGUI.get_actors_at_location(
+    @test JuliaKara.JuliaKara_noGUI.get_actors_at_location(
         world.world,
-        Kara.Kara_noGUI.Location(4,8 )
-    )[1].actor_definition == Kara.Kara_noGUI.ACTOR_DEFINITIONS[:kara]
+        JuliaKara.JuliaKara_noGUI.Location(4,8 )
+    )[1].actor_definition == JuliaKara.JuliaKara_noGUI.ACTOR_DEFINITIONS[:kara]
     # Test all other functions from global scope
     @test turnLeft(kara) == nothing
     @test turnRight(kara) == nothing
@@ -90,32 +90,32 @@ lara = @wcompare get_kara()
     @test mushroomFront(kara) == false
     # Test reset
     reset!(world)
-    @test Kara.Kara_noGUI.get_actors_at_location(
+    @test JuliaKara.JuliaKara_noGUI.get_actors_at_location(
         world.world,
-        Kara.Kara_noGUI.Location(3,8) 
-    )[1].actor_definition == Kara.Kara_noGUI.ACTOR_DEFINITIONS[:kara]
+        JuliaKara.JuliaKara_noGUI.Location(3,8) 
+    )[1].actor_definition == JuliaKara.JuliaKara_noGUI.ACTOR_DEFINITIONS[:kara]
     move(kara)
     store!(world)
     reset!(world)
-    @test Kara.Kara_noGUI.get_actors_at_location(
+    @test JuliaKara.JuliaKara_noGUI.get_actors_at_location(
         world.world,
-        Kara.Kara_noGUI.Location(4,8) 
-    )[1].actor_definition == Kara.Kara_noGUI.ACTOR_DEFINITIONS[:kara]
+        JuliaKara.JuliaKara_noGUI.Location(4,8) 
+    )[1].actor_definition == JuliaKara.JuliaKara_noGUI.ACTOR_DEFINITIONS[:kara]
     # Test other loaded world
     
     @wcompare move(lara)
-    @test Kara.Kara_noGUI.get_actors_at_location(
+    @test JuliaKara.JuliaKara_noGUI.get_actors_at_location(
         wcompare.world,
-        Kara.Kara_noGUI.Location(4,8) 
-    )[1].actor_definition == Kara.Kara_noGUI.ACTOR_DEFINITIONS[:kara]
+        JuliaKara.JuliaKara_noGUI.Location(4,8) 
+    )[1].actor_definition == JuliaKara.JuliaKara_noGUI.ACTOR_DEFINITIONS[:kara]
 end
 
 @testset "Drawing Speed" begin
-    Kara.Gtk.setproperty!(wtest.builder["adj_speed"],:value,3.0)
+    JuliaKara.Gtk.setproperty!(wtest.builder["adj_speed"],:value,3.0)
     @test wtest.drawing_delay == 3.0
 end
 
-Kara.destroy(wtest.window)
-Kara.destroy(wcompare.window)
-Kara.destroy(world.window)
+JuliaKara.destroy(wtest.window)
+JuliaKara.destroy(wcompare.window)
+JuliaKara.destroy(world.window)
 end

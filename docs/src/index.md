@@ -1,9 +1,9 @@
-# Kara.jl Documentation
+# JuliaKara.jl Documentation
 
 ## Functions
 
 ```@meta
-CurrentModule = Kara
+CurrentModule = JuliaKara
 ```
 
 ### World

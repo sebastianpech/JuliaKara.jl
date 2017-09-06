@@ -1,8 +1,8 @@
-using Documenter, Kara
+using Documenter, JuliaKara
 
 makedocs(
     format = :html,
-    sitename = "Kara.jl",
+    sitename = "JuliaKara.jl",
     pages = [
         "index.md",
         "Submodules" => [
@@ -12,7 +12,7 @@ makedocs(
 )
 
 deploydocs(
-    repo = "github.com/sebastianpech/Kara.jl.git",
+    repo = "github.com/sebastianpech/JuliaKara.jl.git",
     target = "build",
     julia = "0.6",
     deps = nothing,
