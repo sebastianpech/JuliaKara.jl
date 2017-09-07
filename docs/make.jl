@@ -12,9 +12,10 @@ makedocs(
 )
 
 deploydocs(
-    repo = "github.com/sebastianpech/JuliaKara.jl.git",
+    repo = "sebastianpech/JuliaKara.jl",
     target = "build",
     julia = "0.6",
     deps = nothing,
     make = nothing,
+    osname= "osx"
 )
