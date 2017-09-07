@@ -1,13 +1,20 @@
 module JuliaKara_Base_GUI
 using Gtk,Gtk.ShortNames, Graphics
+using Cairo
 
 export
     Grid,
     grid_draw,
     world_init,
-    symbol_triangle,
-    symbol_circle,
-    symbol_star
+    symbol_image
+
+res_path = joinpath(@__DIR__,"..","res","icons")
+icons = Dict(
+    :kara => read_from_png(joinpath(res_path,"bugnorth.png")),
+    :tree => read_from_png(joinpath(res_path,"object_tree.png")),
+    :mushroom => read_from_png(joinpath(res_path,"object_mushroom.png")),
+    :leaf => read_from_png(joinpath(res_path,"object_leaf.png"))
+)
 
 struct Grid{Tx<:Real,Ty<:Real,Tw<:Real,Th<:Real}
     x::Tx
@@ -43,6 +50,7 @@ function grid_coordinate_virt(gr::Grid,xr::Float64,yr::Float64)
     Int(ceil(gr.ye - (yr-gr.y)*gr.ye/gr.height))
 end
 
+
 function world_init(title::AbstractString)
     b = GtkBuilder(filename=joinpath(@__DIR__,"layout.glade"))
     c = @Canvas()
@@ -53,46 +61,20 @@ function world_init(title::AbstractString)
     return b,win,c
 end
 
-function symbol_triangle(gr::Grid,ctx::Gtk.CairoContext,x::Int,y::Int,angle::T) where T <: Real
+function symbol_image(gr::Grid,ctx::Gtk.CairoContext,x::Int,y::Int,angle::T,image::Symbol) where T <: Real
+    cairo_matrix = get_matrix(ctx)
     wi = gr.width/gr.xe
     hi = gr.height/gr.ye
     xr,yr = grid_coordinate_real(gr,x,y)
-    vbase = Vec2(xr,yr)
-    vrot = vbase + 0.5*Vec2(wi,hi)
-    va = rotate(Vec2(xr+wi/10,yr+9hi/10),-angle,vrot)
-    vb = rotate(Vec2(xr+9wi/10,yr+9hi/10),-angle,vrot)
-    vc = rotate(Vec2(xr+wi/2,yr+hi/10),-angle,vrot)
-    move_to(ctx,va.x,va.y)
-    line_to(ctx,vb.x,vb.y)
-    line_to(ctx,vc.x,vc.y)
-    line_to(ctx,va.x,va.y)
-    fill(ctx)
-end
-
-function symbol_circle(gr::Grid,ctx::Gtk.CairoContext,x::Int,y::Int)
-    wi = gr.width/gr.xe
-    hi = gr.height/gr.ye
-    radi = (min(wi,hi)/2)*0.9
-    xr,yr = grid_coordinate_real(gr,x,y)
-    vbase = Vec2(xr,yr)
-    vrot = vbase + 0.5*Vec2(wi,hi)
-    circle(ctx,vrot.x,vrot.y,radi)
-    fill(ctx)
-end
-
-function symbol_star(gr::Grid,ctx::Gtk.CairoContext,x::Int,y::Int)
-    wi = gr.width/gr.xe
-    hi = gr.height/gr.ye
-    xr,yr = grid_coordinate_real(gr,x,y)
-    move_to(ctx,xr+wi/10,yr+hi/10)
-    line_to(ctx,xr+9wi/10,yr+9hi/10)
-    move_to(ctx,xr+9wi/10,yr+hi/10)
-    line_to(ctx,xr+wi/10,yr+9hi/10)
-    move_to(ctx,xr+wi/2,yr+hi/10)
-    line_to(ctx,xr+wi/2,yr+9hi/10)
-    move_to(ctx,xr+wi/10,yr+hi/2)
-    line_to(ctx,xr+9wi/10,yr+hi/2)
-    stroke(ctx)
+    img = icons[image]
+    translate(ctx,xr,yr)
+    translate(ctx,wi/2,hi/2)
+    rotate(ctx,-angle)
+    translate(ctx,-wi/2,-hi/2)
+    scale(ctx,wi/img.width,hi/img.height)
+    set_source_surface(ctx,img,0,0)
+    paint(ctx)
+    set_matrix(ctx,cairo_matrix)
 end
 
 end
