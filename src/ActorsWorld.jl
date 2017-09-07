@@ -488,7 +488,7 @@ Only works if `acd_put` has `grabable=true`.
 function actor_putdown!(wo::World,ac::Actor,acd_put::Actor_Definition)
     !acd_put.grabable && throw(ActorInvalidGrabError())
     !(acd_put.layer + 1 == ac.actor_definition.layer) && throw(ActorNotPlaceableError())
-    actor_create!(wo,acd_put,ac.location,ac.orientation)
+    actor_create!(wo,acd_put,ac.location,Orientation(DIRECTIONS[1]))
 end
 
 """

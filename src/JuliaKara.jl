@@ -247,23 +247,22 @@ function wrap_actor_drag(wo::World_GUI,ac::JuliaKara_noGUI.Actor,b)
         if JuliaKara_noGUI.location_within_world(wo.world,JuliaKara_noGUI.Location(x,y))
             world_redraw(wo,true)
             if ac.actor_definition == JuliaKara_noGUI.ACTOR_DEFINITIONS[:kara]
-                set_source_rgb(ctx,0,0,0)
-                symbol_triangle(gr,ctx,
-                                x,
-                                y,
-                                orientation_to_rad(ac.orientation)-π/2)
+                image_name = :kara
             elseif ac.actor_definition == JuliaKara_noGUI.ACTOR_DEFINITIONS[:mushroom]
-                set_source_rgb(ctx,1,0,0)
-                symbol_circle(gr,ctx,x,y)
+                image_name = :mushroom
             elseif ac.actor_definition == JuliaKara_noGUI.ACTOR_DEFINITIONS[:tree]
-                set_source_rgb(ctx,0.5,0.3,0)
-                symbol_circle(gr,ctx,x,y)
+                image_name = :tree
             elseif ac.actor_definition == JuliaKara_noGUI.ACTOR_DEFINITIONS[:leaf]
-                set_source_rgb(ctx,0,0.5,0)
-                symbol_star(gr,ctx,x,y)
+                image_name = :leaf
             else
                 error("Missing actor definition, cant draw shape.")
             end
+            symbol_image(gr,ctx,
+                         x,
+                         y,
+                         orientation_to_rad(ac.orientation)-π/2,
+                         image_name
+                         )
             reveal(widget)
         end
     end
@@ -423,7 +422,7 @@ end
 
 function kara_world_draw(wo::World_GUI)
     @guarded draw(wo.canvas) do widget
-                ctx = getgc(wo.canvas)
+        ctx = getgc(wo.canvas)
         # Draw Background
         set_source_rgb(ctx,0.85,0.85,0.85)
         paint(ctx)
@@ -440,23 +439,22 @@ function kara_world_draw(wo::World_GUI)
                 continue
             end
             if ac.actor_definition == JuliaKara_noGUI.ACTOR_DEFINITIONS[:kara]
-                set_source_rgb(ctx,0,0,0)
-                symbol_triangle(gr,ctx,
-                                ac.location.x,
-                                ac.location.y,
-                                orientation_to_rad(ac.orientation)-π/2)
+                image_name = :kara
             elseif ac.actor_definition == JuliaKara_noGUI.ACTOR_DEFINITIONS[:mushroom]
-                set_source_rgb(ctx,1,0,0)
-                symbol_circle(gr,ctx,ac.location.x,ac.location.y)
+                image_name = :mushroom
             elseif ac.actor_definition == JuliaKara_noGUI.ACTOR_DEFINITIONS[:tree]
-                set_source_rgb(ctx,0.5,0.3,0)
-                symbol_circle(gr,ctx,ac.location.x,ac.location.y)
+                image_name = :tree
             elseif ac.actor_definition == JuliaKara_noGUI.ACTOR_DEFINITIONS[:leaf]
-                set_source_rgb(ctx,0,0.5,0)
-                symbol_star(gr,ctx,ac.location.x,ac.location.y)
+                image_name = :leaf
             else
                 error("Missing actor definition, cant draw shape.")
             end
+            symbol_image(gr,ctx,
+                         ac.location.x,
+                         ac.location.y,
+                         orientation_to_rad(ac.orientation)-π/2,
+                         image_name
+                         )
         end
     end
 end
