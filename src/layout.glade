@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Generated with glade 3.20.0 -->
 <interface>
-  <requires lib="gtk+" version="3.20"/>
+  <requires lib="gtk+" version="3.10"/>
   <object class="GtkAdjustment" id="adj_speed">
     <property name="upper">500</property>
     <property name="step_increment">1</property>
@@ -13,18 +13,18 @@
     <property name="default_height">460</property>
     <property name="icon_name">system-run</property>
     <child>
-      <object class="GtkBox">
+      <object class="GtkBox" id="box_main">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="orientation">vertical</property>
         <child>
-          <object class="GtkFrame">
+          <object class="GtkFrame" id="frame_main">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="label_xalign">0</property>
             <property name="shadow_type">none</property>
             <child>
-              <object class="GtkBox">
+              <object class="GtkBox" id="box_inner">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <child>
@@ -48,12 +48,12 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkToolPalette">
+                  <object class="GtkToolPalette" id="main_toolpalette">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="orientation">vertical</property>
                     <child>
-                      <object class="GtkToolItemGroup">
+                      <object class="GtkToolItemGroup" id="main_toolgroup">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="label" translatable="yes">Elements</property>
@@ -113,7 +113,7 @@
               </object>
             </child>
             <child type="label">
-              <object class="GtkToolbar">
+              <object class="GtkToolbar" id="toolbar_main">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <child>
