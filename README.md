@@ -10,9 +10,9 @@
 
 A package that is a port of SwissEducs [Kara](http://www.swisseduc.ch/informatik/karatojava/) (Page in German).
 Kara is a concept for an easy access into the world of programming.
-Kara is a tiny ladybug (or triangle) living in a forest with mushrooms, trees and leafs.
+Kara is a tiny ladybug living in a forest with mushrooms, trees and leafs.
 Kara can move a single mushroom, place and remove leafs and cannot move trees.
-In comparison to the original Kara the interaction manly focuses on using the REPL and is lacking fancy mushrooms and bugs.
+In comparison to the original Kara the interaction manly focuses on using the REPL.
 
 ## Installation
 Install within Julia using
@@ -23,7 +23,7 @@ Pkg.add("JuliaKara")
 
 ## Introduction
 
-Start using JuliaKara.jl by opening Julia and entering `using JuliaKara` into the REPL.
+Start using JuliaKara by opening Julia and entering `using JuliaKara` into the REPL.
 Next create a new world of size 10x10 with function bindings in global scope by entering `@World (10,10)`.
 
 You can now use
@@ -43,7 +43,7 @@ and
 
 ### Alternative methods of creating/loading a world
 
-JuliaKara.jl is aware of the xml syntax the original Kara uses for storing worlds in files.
+JuliaKara is aware of the xml syntax the original Kara uses for storing worlds in files.
 It's possible to load a world through the GUI or with the command `@World [path]`.
 In contrast to the GUI version `@World [path]` opens a new window and registers `world` and `kara` in global scope as references.
 
@@ -65,7 +65,7 @@ kara_save = kara
 # are now overwritten with references to elements from file3.world
 move(kara) # moves Kara in world from file3.world
 
-# Acces stored references
+# Access stored references
 move(world_save,kara_save) # moves Kara in world from file2.world
 ```
 
@@ -75,7 +75,7 @@ In case one loads a world through the GUI and wants the above behaviour, the ref
 kara = get_kara(world)
 ```
 
-JuliaKara.jl supports multiple worlds and multiple Karas. In case you want to reproduce the example, run it from within the test directory of JuliaKara.jl e.g `~/.Julia/v0.6/JuliaKara/test`.
+JuliaKara supports multiple worlds and multiple Karas. In case you want to reproduce the example run it from within the test directory of JuliaKara e.g `~/.Julia/v0.6/JuliaKara/test`.
 
 ```jl
 # Load the world contained in example.world.
