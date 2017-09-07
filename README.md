@@ -19,7 +19,7 @@ In comparison to the original Kara the interaction manly focuses on using the RE
 The package contained in [METADATA.jl](https://github.com/JuliaLang/METADATA.jl), therefore to install run the following in Julia.
 
 ```jl
-Pkg.add("JuliaJuliaKara")
+Pkg.add("JuliaKara")
 ```
 
 ## Introduction
