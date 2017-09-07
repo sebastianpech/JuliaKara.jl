@@ -1,6 +1,6 @@
 # JuliaKara
 <div align="center">
-<img src="http://imgur.com/qfHEf0E.gif" width=300 />
+<img src="http://imgur.com/kgkXZrY.gif" width=400 />
 </div>
 
 [![Build Status](https://travis-ci.org/sebastianpech/JuliaKara.jl.svg?branch=master)](https://travis-ci.org/sebastianpech/JuliaKara.jl)
@@ -15,8 +15,7 @@ Kara can move a single mushroom, place and remove leafs and cannot move trees.
 In comparison to the original Kara the interaction manly focuses on using the REPL and is lacking fancy mushrooms and bugs.
 
 ## Installation
-
-The package contained in [METADATA.jl](https://github.com/JuliaLang/METADATA.jl), therefore to install run the following in Julia.
+Install within Julia using
 
 ```jl
 Pkg.add("JuliaKara")
