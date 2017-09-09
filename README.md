@@ -11,7 +11,7 @@
 A package that is a port of SwissEducs [Kara](http://www.swisseduc.ch/informatik/karatojava/) (Page in German).
 Kara is a concept for an easy access into the world of programming.
 Kara is a tiny ladybug living in a forest with mushrooms, trees and leafs.
-Kara can move a single mushroom, place and remove leafs and cannot move trees.
+Kara can move a single mushroom, place and remove leafs, cannot move trees and is entirely controlled using julia code.
 In comparison to the original Kara the interaction manly focuses on using the REPL.
 
 ## Installation
