@@ -1,6 +1,6 @@
 # JuliaKara
 <div align="center">
-<img src="http://imgur.com/kgkXZrY.gif" width=400 />
+<img src="http://imgur.com/B2bpS7v.gif" width=500 />
 </div>
 
 [![Build Status](https://travis-ci.org/sebastianpech/JuliaKara.jl.svg?branch=master)](https://travis-ci.org/sebastianpech/JuliaKara.jl)
