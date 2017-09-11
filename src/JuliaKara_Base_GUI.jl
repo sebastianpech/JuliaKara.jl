@@ -6,7 +6,8 @@ export
     Grid,
     grid_draw,
     world_init,
-    symbol_image
+    symbol_image,
+    cover_field
 
 res_path = joinpath(@__DIR__,"..","res","icons")
 icons = Dict(
@@ -59,6 +60,18 @@ function world_init(title::AbstractString)
     win = b["win_main"]
     showall(win)
     return b,win,c
+end
+
+function cover_field(gr::Grid,ctx::Gtk.CairoContext,x::Int,y::Int)
+    wi = gr.width/gr.xe
+    hi = gr.height/gr.ye
+    xr,yr = grid_coordinate_real(gr,x,y)
+    set_source_rgb(ctx,0.85,0.85,0.85)
+    rectangle(ctx,xr,yr,wi,hi)
+    fill(ctx)
+    set_source_rgb(ctx,0.0,0.0,0.0)
+    rectangle(ctx,xr,yr,wi,hi)
+    stroke(ctx)
 end
 
 function symbol_image(gr::Grid,ctx::Gtk.CairoContext,x::Int,y::Int,angle::T,image::Symbol) where T <: Real
