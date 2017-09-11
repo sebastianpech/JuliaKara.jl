@@ -498,6 +498,7 @@ Checks if an actor of type `acd` is left of `ac`.
 """
 function is_actor_definition_left(wo::World,ac::Actor,acd::Actor_Definition)
     lo_left = location_move(ac.location,orientation_rotate(ac.orientation,Val{false}))
+    lo_left = location_fix_ooBound(wo,lo_left)
     return actor_definition_at_location(wo,lo_left,acd)
 end
 
@@ -507,8 +508,9 @@ end
 Checks if an actor of type `acd` is right of `ac`.
 """
 function is_actor_definition_right(wo::World,ac::Actor,acd::Actor_Definition)
-    lo_left = location_move(ac.location,orientation_rotate(ac.orientation,Val{true}))
-    return actor_definition_at_location(wo,lo_left,acd)
+    lo_right = location_move(ac.location,orientation_rotate(ac.orientation,Val{true}))
+    lo_right = location_fix_ooBound(wo,lo_right)
+    return actor_definition_at_location(wo,lo_right,acd)
 end
 
 """
@@ -517,8 +519,9 @@ end
 Checks if an actor of type `acd` is front of `ac`.
 """
 function is_actor_definition_front(wo::World,ac::Actor,acd::Actor_Definition)
-    lo_left = location_move(ac.location,ac.orientation)
-    return actor_definition_at_location(wo,lo_left,acd)
+    lo_front = location_move(ac.location,ac.orientation)
+    lo_front = location_fix_ooBound(wo,lo_front)
+    return actor_definition_at_location(wo,lo_front,acd)
 end
 
 """

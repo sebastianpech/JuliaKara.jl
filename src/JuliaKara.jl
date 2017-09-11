@@ -47,6 +47,11 @@ import .JuliaKara_noGUI:World,
     get_kara,
     reset!
 
+import .JuliaKara_noGUI.ActorsWorld:Location,
+get_actors_at_location_on_layer,
+location_move,
+location_fix_ooBound
+
 """
     World_GUI(world::World,canvas::GtkCanvas,saved_world::World_State,drawing_delay::Float64)
 
@@ -76,8 +81,9 @@ end
 Redraws the world `wo`. If `no_delay` is `true` the delay controlled by `wo.drawing_delay`
 which controls the 
 """
-function world_redraw(wo::World_GUI,no_delay::Bool=false)
-    draw(wo.canvas)
+function world_redraw(wo::World_GUI,no_delay::Bool=false,changes::Vector{Location}=Location[])
+    # draw(wo.canvas)
+    kara_world_draw_elements(wo,changes)
     reveal(wo.canvas)
     if !no_delay
         sleep(wo.drawing_delay/1000)
@@ -420,42 +426,58 @@ function grid_generate(wo::World_GUI)
                        )
 end
 
-function kara_world_draw(wo::World_GUI)
-    @guarded draw(wo.canvas) do widget
-        ctx = getgc(wo.canvas)
+function kara_world_draw_elements(wo::World_GUI,changes::Vector{Location}=Location[])
+    ctx = getgc(wo.canvas)
+    gr = grid_generate(wo)
+    # Get Actors
+    # Sort by layer
+    # first and thus are displayed on the bottom layer
+    acs = sort(wo.world.actors,by=a->a.actor_definition.layer)
+    # Rebuild entire scene if no changes were given
+    # Else only clear given fields and filter actors by location
+    if length(changes) == 0
         # Draw Background
         set_source_rgb(ctx,0.85,0.85,0.85)
         paint(ctx)
         # Draw Grid
         set_source_rgb(ctx,1,1,1) # Black
-        gr = grid_generate(wo)
         grid_draw(gr,ctx)
-        # Draw Actors
-        # Sort by layer
-        # first and thus are displayed on the bottom layer
-        for ac in sort(wo.world.actors,by=a->a.actor_definition.layer)
-            # Dont draw the actor if it is currently draged
-            if wo.drag_mode && wo.drag_actor === ac
-                continue
-            end
-            if ac.actor_definition == JuliaKara_noGUI.ACTOR_DEFINITIONS[:kara]
-                image_name = :kara
-            elseif ac.actor_definition == JuliaKara_noGUI.ACTOR_DEFINITIONS[:mushroom]
-                image_name = :mushroom
-            elseif ac.actor_definition == JuliaKara_noGUI.ACTOR_DEFINITIONS[:tree]
-                image_name = :tree
-            elseif ac.actor_definition == JuliaKara_noGUI.ACTOR_DEFINITIONS[:leaf]
-                image_name = :leaf
-            else
-                error("Missing actor definition, cant draw shape.")
-            end
-            symbol_image(gr,ctx,
-                         ac.location.x,
-                         ac.location.y,
-                         orientation_to_rad(ac.orientation)-π/2,
-                         image_name
-                         )
+    else
+        for l in changes
+            cover_field(gr,ctx,l.x,l.y)
         end
+        # Filter in case changes was given
+        filter!(x->x.location in changes,acs)
+    end
+
+    for ac in acs
+        # Dont draw the actor if it is currently draged
+        if wo.drag_mode && wo.drag_actor === ac
+            continue
+        end
+        if ac.actor_definition == JuliaKara_noGUI.ACTOR_DEFINITIONS[:kara]
+            image_name = :kara
+        elseif ac.actor_definition == JuliaKara_noGUI.ACTOR_DEFINITIONS[:mushroom]
+            image_name = :mushroom
+        elseif ac.actor_definition == JuliaKara_noGUI.ACTOR_DEFINITIONS[:tree]
+            image_name = :tree
+        elseif ac.actor_definition == JuliaKara_noGUI.ACTOR_DEFINITIONS[:leaf]
+            image_name = :leaf
+        else
+            error("Missing actor definition, cant draw shape.")
+        end
+        symbol_image(gr,ctx,
+                     ac.location.x,
+                     ac.location.y,
+                     orientation_to_rad(ac.orientation)-π/2,
+                     image_name
+                     )
+    end
+end
+
+function kara_world_draw(wo::World_GUI)
+    @guarded draw(wo.canvas) do widget
+        kara_world_draw_elements(wo)
     end
 end
 
@@ -470,7 +492,7 @@ This function is a wrapper around [`JuliaKara_noGUI.place_kara`](@ref) to suppor
 """
 function place_kara(wo::World_GUI,x::Int,y::Int,direction::Symbol=JuliaKara_noGUI.ActorsWorld.DIRECTIONS[1])
     ac = place_kara(wo.world,x,y,direction)
-    world_redraw(wo)
+    world_redraw(wo,true,[ac.location])
     return ac
 end
 
@@ -484,7 +506,7 @@ This function is a wrapper around [`JuliaKara_noGUI.place_tree`](@ref) to suppor
 """
 function place_tree(wo::World_GUI,x::Int,y::Int)
     ac = place_tree(wo.world,x,y)
-    world_redraw(wo)
+    world_redraw(wo,true,[ac.location])
     return ac
 end
 
@@ -498,7 +520,7 @@ This function is a wrapper around [`JuliaKara_noGUI.place_leaf`](@ref) to suppor
 """
 function place_leaf(wo::World_GUI,x::Int,y::Int)
     ac = place_leaf(wo.world,x,y)
-    world_redraw(wo)
+    world_redraw(wo,true,[ac.location])
     return ac
 end
 
@@ -512,7 +534,7 @@ This function is a wrapper around [`JuliaKara_noGUI.place_mushroom`](@ref) to su
 """
 function place_mushroom(wo::World_GUI,x::Int,y::Int)
     ac = place_mushroom(wo.world,x,y)
-    world_redraw(wo)
+    world_redraw(wo,true,[ac.location])
     return ac
 end
 
@@ -524,8 +546,33 @@ Moves the actor `ac` a step forward in the world `wo`.
 This function is a wrapper around [`JuliaKara_noGUI.move`](@ref) to support GUI.
 """
 function move(wo::World_GUI,ac::Actor)
+    # In case the actor in front of kara is moveable,
+    # additionally two fields need to be repainted.
+    actors_in_front = get_actors_at_location_on_layer(
+        wo.world,
+        ac.location,
+        ac.actor_definition.layer
+    )
+    if length(actors_in_front) == 0
+        new_lo = location_move(ac.location,ac.orientation)
+        new_lo = location_fix_ooBound(wo.world,new_lo)
+        changes = Location[
+            ac.location,
+            new_lo
+        ]
+    else
+        changes = Location[]
+        sizehint!(changes,4)
+        push!(changes,ac.location)
+        for i in 1:3
+            new_lo = location_move(changes[i],ac.orientation)
+            new_lo = location_fix_ooBound(wo.world,new_lo)
+            push!(changes,new_lo)
+        end
+    end
     move(wo.world,ac)
-    world_redraw(wo)
+
+    world_redraw(wo,false,changes)
 end
 
 """
@@ -537,7 +584,7 @@ This function is a wrapper around [`JuliaKara_noGUI.turnLeft`](@ref) to support 
 """
 function turnLeft(wo::World_GUI,ac::Actor)
     turnLeft(wo.world,ac)
-    world_redraw(wo)
+    world_redraw(wo,false,[ac.location])
 end
 
 """
@@ -549,7 +596,7 @@ This function is a wrapper around [`JuliaKara_noGUI.turnRight`](@ref) to support
 """
 function turnRight(wo::World_GUI,ac::Actor)
     turnRight(wo.world,ac)
-    world_redraw(wo)
+    world_redraw(wo,false,[ac.location])
 end
 
 """
@@ -561,7 +608,7 @@ This function is a wrapper around [`JuliaKara_noGUI.removeLeaf`](@ref) to suppor
 """
 function removeLeaf(wo::World_GUI,ac::Actor)
     removeLeaf(wo.world,ac)
-    world_redraw(wo)
+    world_redraw(wo,false,[ac.location])
 end
 
 """
@@ -573,7 +620,7 @@ This function is a wrapper around [`JuliaKara_noGUI.putLeaf`](@ref) to support G
 """
 function putLeaf(wo::World_GUI,ac::Actor)
     putLeaf(wo.world,ac)
-    world_redraw(wo)
+    world_redraw(wo,false,[ac.location])
 end
 
 """
