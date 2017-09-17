@@ -131,4 +131,7 @@ end
 @w1 turnAround(lara)
 ```
 
+## Examples
 
+The [examples page](https://sebastianpech.github.io/JuliaKara-Examples/) for
+JuliaKara contains further material showing the usage of JuliaKara.
