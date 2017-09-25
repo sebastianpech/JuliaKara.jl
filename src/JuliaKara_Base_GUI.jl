@@ -28,27 +28,27 @@ end
 
 function grid_draw(gr::Grid,ctx::Gtk.CairoContext)
     new_path(ctx)
-    move_to(ctx,gr.x,gr.y)
+    move_to(ctx,gr.x+0.5,gr.y+0.5)
     set_source_rgb(ctx,0,0,0)
-    for x in linspace(gr.x,gr.x+gr.width,gr.xe+1)
-        move_to(ctx,x,gr.y+gr.height)
+    for x in linspace(gr.x+0.5,gr.x+0.5+gr.width,gr.xe+1)
+        move_to(ctx,x,gr.y+0.5+gr.height)
         rel_line_to(ctx,0,-gr.height)
     end
-    for y in linspace(gr.y,gr.y+gr.height,gr.ye+1)
-        move_to(ctx,gr.x,y)
+    for y in linspace(gr.y+0.5,gr.y+0.5+gr.height,gr.ye+1)
+        move_to(ctx,gr.x+0.5,y)
         rel_line_to(ctx,gr.width,0)
     end
     stroke(ctx)
 end
 
 function grid_coordinate_real(gr::Grid,x::Int,y::Int)
-    gr.x + gr.width/gr.xe*(x-1),
-    gr.y + gr.height/gr.ye*(gr.ye-y)
+    gr.x+0.5 + gr.width/gr.xe*(x-1),
+    gr.y+0.5 + gr.height/gr.ye*(gr.ye-y)
 end
 
 function grid_coordinate_virt(gr::Grid,xr::Float64,yr::Float64)
-    Int(floor((xr-gr.x)*gr.xe/gr.width+1)),
-    Int(ceil(gr.ye - (yr-gr.y)*gr.ye/gr.height))
+    Int(floor((xr-gr.x+0.5)*gr.xe/gr.width+1)),
+    Int(ceil(gr.ye - (yr-gr.y+0.5)*gr.ye/gr.height))
 end
 
 
@@ -69,8 +69,10 @@ function cover_field(gr::Grid,ctx::Gtk.CairoContext,x::Int,y::Int)
     set_source_rgb(ctx,0.85,0.85,0.85)
     rectangle(ctx,xr,yr,wi,hi)
     fill(ctx)
-    set_source_rgb(ctx,0.0,0.0,0.0)
     rectangle(ctx,xr,yr,wi,hi)
+    stroke(ctx)
+    set_source_rgb(ctx,0.0,0.0,0.0)
+    rectangle(ctx,xr,yr,wi,hi) 
     stroke(ctx)
 end
 
