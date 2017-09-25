@@ -548,13 +548,14 @@ This function is a wrapper around [`JuliaKara_noGUI.move`](@ref) to support GUI.
 function move(wo::World_GUI,ac::Actor)
     # In case the actor in front of kara is moveable,
     # additionally two fields need to be repainted.
+    front_lo = location_move(ac.location,ac.orientation)
     actors_in_front = get_actors_at_location_on_layer(
         wo.world,
-        ac.location,
+        front_lo,
         ac.actor_definition.layer
     )
     if length(actors_in_front) == 0
-        new_lo = location_move(ac.location,ac.orientation)
+        new_lo = front_lo
         new_lo = location_fix_ooBound(wo.world,new_lo)
         changes = Location[
             ac.location,
