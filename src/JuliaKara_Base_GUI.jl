@@ -30,11 +30,11 @@ function grid_draw(gr::Grid,ctx::Gtk.CairoContext)
     new_path(ctx)
     move_to(ctx,gr.x+0.5,gr.y+0.5)
     set_source_rgb(ctx,0,0,0)
-    for x in linspace(gr.x+0.5,gr.x+0.5+gr.width,gr.xe+1)
+    for x in range(gr.x+0.5,stop=gr.x+0.5+gr.width,length=gr.xe+1)
         move_to(ctx,x,gr.y+0.5+gr.height)
         rel_line_to(ctx,0,-gr.height)
     end
-    for y in linspace(gr.y+0.5,gr.y+0.5+gr.height,gr.ye+1)
+    for y in range(gr.y+0.5,stop=gr.y+0.5+gr.height,length=gr.ye+1)
         move_to(ctx,gr.x+0.5,y)
         rel_line_to(ctx,gr.width,0)
     end
@@ -54,7 +54,7 @@ end
 
 function world_init(title::AbstractString)
     b = GtkBuilder(filename=joinpath(@__DIR__,"layout.glade"))
-    c = @Canvas()
+    c = @GtkCanvas()
     fc = b["frame_canvas"]
     push!(fc,c)
     win = b["win_main"]

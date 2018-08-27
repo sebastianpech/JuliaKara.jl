@@ -53,40 +53,40 @@ end
 function xml_parse_tree!(wo::World,element::XMLElement)
     place_tree(
         wo,
-        xml_map_x(wo,attribute(element,"x") |> parse),
-        xml_map_y(wo,attribute(element,"y") |> parse)
+        xml_map_x(wo,parse(Int,attribute(element,"x"))),
+        xml_map_y(wo,parse(Int,attribute(element,"y")))
     )
 end
 
 function xml_parse_mushroom!(wo::World,element::XMLElement)
     place_mushroom(
         wo,
-        xml_map_x(wo,attribute(element,"x") |> parse),
-        xml_map_y(wo,attribute(element,"y") |> parse)
+        xml_map_x(wo,parse(Int,attribute(element,"x"))),
+        xml_map_y(wo,parse(Int,attribute(element,"y")))
     )
 end
 
 function xml_parse_leaf!(wo::World,element::XMLElement)
     place_leaf(
         wo,
-        xml_map_x(wo,attribute(element,"x") |> parse),
-        xml_map_y(wo,attribute(element,"y") |> parse)
+        xml_map_x(wo,parse(Int,attribute(element,"x"))),
+        xml_map_y(wo,parse(Int,attribute(element,"y")))
     )
 end
 
 function xml_parse_kara!(wo::World,element::XMLElement)
     place_kara(
         wo,
-        xml_map_x(wo,attribute(element,"x") |> parse),
-        xml_map_y(wo,attribute(element,"y") |> parse),
-        attribute(element,"direction") |> parse |> xml_map_direction
+        xml_map_x(wo,parse(Int,attribute(element,"x"))),
+        xml_map_y(wo,parse(Int,attribute(element,"y"))),
+        parse(Int,attribute(element,"direction")) |> xml_map_direction
     )
 end
 
 function xml_generate_world(element::XMLElement)
     World(
-        attribute(element,"sizex") |> parse,
-        attribute(element,"sizey") |> parse
+        parse(Int,attribute(element,"sizex")),
+        parse(Int,attribute(element,"sizey"))
     )
 end
 

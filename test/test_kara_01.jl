@@ -1,5 +1,5 @@
 module kara_ex01
-using Base.Test
+using Test
 include("../src/JuliaKara_noGUI.jl"); using .JuliaKara_noGUI
 
 @testset "JuliaKara Example 01" begin

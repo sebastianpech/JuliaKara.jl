@@ -324,7 +324,6 @@ end
 
 Moves `ac` to `lo` after validating.
 """
-
 function actor_moveto!(wo::World,ac::Actor,lo::Location)
     actor_validate_location_move(wo,ac.actor_definition,lo)
     ac.location = lo
@@ -355,7 +354,7 @@ end
 Delete the actor `ac` from the World `wo`.
 """
 function actor_delete!(wo::World,ac::Actor)
-    i = findnext(wo.actors,ac,1)
+    i = something(findnext(isequal(ac),wo.actors,1),0)
     i != 0 || throw(ActorNotFound())
     deleteat!(wo.actors,i)
 end
@@ -586,11 +585,10 @@ function reset!(wo::World,state::World_State)
         pop!(wo.actors)
     end
     # Refill
-    for ac in map(state.actors) do ast
+
+    for ast in pairs(state.actors)
         actor_reset!(ast.first,ast.second)
-        ast
-    end
-        push!(wo.actors,ac.first)
+        push!(wo.actors,ast.first)
     end
     return nothing
 end

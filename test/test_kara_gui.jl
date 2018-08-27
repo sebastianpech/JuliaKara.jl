@@ -1,5 +1,5 @@
 module kara_gui
-using Base.Test
+using Test
 using JuliaKara
 
 path = joinpath(@__DIR__,"..","test","example.world")
@@ -108,11 +108,6 @@ lara = @wcompare get_kara()
         wcompare.world,
         JuliaKara.JuliaKara_noGUI.Location(4,8) 
     )[1].actor_definition == JuliaKara.JuliaKara_noGUI.ACTOR_DEFINITIONS[:kara]
-end
-
-@testset "Drawing Speed" begin
-    JuliaKara.Gtk.setproperty!(wtest.builder["adj_speed"],:value,3.0)
-    @test wtest.drawing_delay == 3.0
 end
 
 JuliaKara.destroy(wtest.window)

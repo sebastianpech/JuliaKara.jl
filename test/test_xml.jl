@@ -1,6 +1,6 @@
 module kara_xml
 
-using Base.Test
+using Test
 include("../src/JuliaKara_noGUI.jl"); using .JuliaKara_noGUI
 
 @testset "JuliaKara XML" begin

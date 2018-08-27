@@ -1,5 +1,5 @@
 module actor_world_test
-using Base.Test
+using Test
 include("../src/ActorsWorld.jl"); using .ActorsWorld
 
 
