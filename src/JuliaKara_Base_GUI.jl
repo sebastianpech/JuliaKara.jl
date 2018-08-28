@@ -10,12 +10,17 @@ export
     cover_field
 
 res_path = joinpath(@__DIR__,"..","res","icons")
+
+# Should be initialized at runtime
 icons = Dict(
-    :kara => read_from_png(joinpath(res_path,"bugnorth.png")),
-    :tree => read_from_png(joinpath(res_path,"object_tree.png")),
-    :mushroom => read_from_png(joinpath(res_path,"object_mushroom.png")),
-    :leaf => read_from_png(joinpath(res_path,"object_leaf.png"))
 )
+
+function __init__()
+    icons[:kara] = read_from_png(joinpath(res_path,"bugnorth.png"))
+    icons[:tree] = read_from_png(joinpath(res_path,"object_tree.png"))
+    icons[:mushroom] = read_from_png(joinpath(res_path,"object_mushroom.png"))
+    icons[:leaf] = read_from_png(joinpath(res_path,"object_leaf.png"))
+end
 
 struct Grid{Tx<:Real,Ty<:Real,Tw<:Real,Th<:Real}
     x::Tx
@@ -82,10 +87,14 @@ function symbol_image(gr::Grid,ctx::Gtk.CairoContext,x::Int,y::Int,angle::T,imag
     hi = gr.height/gr.ye
     xr,yr = grid_coordinate_real(gr,x,y)
     img = icons[image]
+    # Move to the center node
     translate(ctx,xr,yr)
     translate(ctx,wi/2,hi/2)
+    # Rotate in the center node
     rotate(ctx,-angle)
+    # Move back to the upper left node
     translate(ctx,-wi/2,-hi/2)
+    # Scale the image to fit the grid
     scale(ctx,wi/img.width,hi/img.height)
     set_source_surface(ctx,img,0,0)
     paint(ctx)
