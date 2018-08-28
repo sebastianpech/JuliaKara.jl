@@ -110,7 +110,13 @@ lara = @wcompare get_kara()
     )[1].actor_definition == JuliaKara.JuliaKara_noGUI.ACTOR_DEFINITIONS[:kara]
 end
 
+@testset "Drawing Speed" begin
+    JuliaKara.Gtk.set_gtk_property!(wtest.builder["adj_speed"],:value,3.0)
+    @test wtest.drawing_delay == 3.0
+end
+
 JuliaKara.destroy(wtest.window)
 JuliaKara.destroy(wcompare.window)
 JuliaKara.destroy(world.window)
 end
+

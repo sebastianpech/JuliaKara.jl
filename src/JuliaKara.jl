@@ -189,7 +189,7 @@ end
 
 function wrap_slider_value_changed_callback(wo::World_GUI)
     function(widget)
-        wo.drawing_delay = getproperty(widget,:value,Float64)
+        wo.drawing_delay = get_gtk_property(widget,:value,Float64)
     end
 end
 
