@@ -15,7 +15,13 @@ Kara can move a single mushroom, place and remove leafs, cannot move trees and i
 In comparison to the original Kara the interaction manly focuses on using the REPL.
 
 ## Installation
-Install within Julia using
+Install within Julia in the Pkg REPL-mode using
+
+```jl
+add JuliaKara
+```
+
+or in Julia 0.6 in REPL-mode using
 
 ```jl
 Pkg.add("JuliaKara")
