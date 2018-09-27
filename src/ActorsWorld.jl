@@ -130,9 +130,9 @@ end
 """
     orientation_rotate(or::Orientation,::Type{Val{bool}})
 
-Rotates a `Orientation` counter-clockwise for Val{false} and clockwise for
-Val{true}. Basically jumps to the next enty in `DIRECTIONS`. The last jumps
-to the first and the first to the last.
+Rotates a `Orientation` counter-clockwise for Val{false} and clockwise
+for Val{true}. Basically jumps to the next enty in `DIRECTIONS`. The
+last jumps to the first and the first to the last.
 """
 function orientation_rotate(or::Orientation,::Type{Val{false}})
     if or.value == DIRECTIONS[1]
@@ -544,8 +544,9 @@ end
 """
     world_state_save(wo::World)
 
-Conerts a world `wo` to a structure that holds all actors with their current location and orientation.
-Can be used with `reset!` to revert a world to a certain `World_State`.
+Conerts a world `wo` to a structure that holds all actors with their
+current location and orientation.  Can be used with `reset!` to revert
+a world to a certain `World_State`.
 
 # Examples
 ```julia-repl
