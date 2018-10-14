@@ -82,7 +82,7 @@
           appearance: none;
           width: 25px;
           height: 25px;
-          background: #4CAF50;
+          background: #0c5400;
           cursor: pointer;
       }
 
@@ -204,7 +204,7 @@
                   this.current_drag = ev.target.getAttribute("actor_id")
                   this.create_new_type=0
               },
-              deleteActor : function (ev) {
+              delteActor : function (ev) {
                   ev.preventDefault();
                   if (this.current_drag != 0){
                       Blink.msg("delete_actor",{id : this.current_drag})

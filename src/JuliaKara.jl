@@ -92,6 +92,7 @@ function World(height::Int,width::Int,name::AbstractString)
         world_state_save(world),
         0,
     )
+    Blink.AtomShell.title(world_gui.window,name)
     loadGUI(world_gui)
     return world_gui
 end
