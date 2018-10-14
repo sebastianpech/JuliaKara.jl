@@ -3,6 +3,10 @@ using Test
 using JuliaKara
 
 path = joinpath(@__DIR__,"..","test","example.world")
+
+cleanup = !JuliaKara.Blink.AtomShell.isinstalled()
+cleanup && JuliaKara.Blink.AtomShell.install()
+
 @World wtest (10,10)
 
 @testset "JuliaKara Example 01" begin
