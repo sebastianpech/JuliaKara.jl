@@ -1,6 +1,8 @@
 using JuliaKara
 @World "./intro.world"
 
+world.drawing_delay = 0.03
+
 function line(kara,length::Int)
     for i in 1:length
         putLeaf(kara)

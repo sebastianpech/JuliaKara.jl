@@ -10,16 +10,28 @@ notifications:
   email: false
 git:
   depth: 99999999
-addons:
-  apt:
-    packages:
-      - xvfb
-      - xauth
-      - libgtk-3-0
+matrix:
+  include:
+    - os: linux
+      julia: 0.7
+      env: TESTCMD="xvfb-run julia"
+    - os: linux
+      julia: 1.0
+      env: TESTCMD="xvfb-run julia"
+    - os: linux
+      julia: nightly
+      env: TESTCMD="xvfb-run julia"
+    - os: osx
+      julia: 0.7
+      env: TESTCMD="julia"
+    - os: osx
+      julia: 1.0
+      env: TESTCMD="julia"
+    - os: osx
+      julia: nightly
+      env: TESTCMD="julia"
 
 script:
-    - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-    - if [[ `uname` = "Linux" ]]; then TESTCMD="xvfb-run julia"; else TESTCMD="julia"; fi
     - $TESTCMD -e 'using Pkg; Pkg.clone(pwd()); Pkg.build("JuliaKara"); Pkg.test("JuliaKara"; coverage=true)'
     
 after_success:

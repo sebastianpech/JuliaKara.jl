@@ -1,7 +1,6 @@
 module JuliaKara
-using Gtk.ShortNames, Graphics
+using Blink
 include("JuliaKara_noGUI.jl"); using .JuliaKara_noGUI
-include("JuliaKara_Base_GUI.jl"); using .JuliaKara_Base_GUI
 
 export
     World,
@@ -19,6 +18,7 @@ export
     treeRight,
     mushroomFront,
     onLeaf,
+    reloadGUI,
     @World,
     save_world,
     load_world,
@@ -26,7 +26,7 @@ export
     store!,
     reset!,
     world_state_save
-    
+
 import .JuliaKara_noGUI:World,
     place_kara,
     place_tree,
@@ -50,7 +50,9 @@ import .JuliaKara_noGUI:World,
 import .JuliaKara_noGUI.ActorsWorld:Location,
 get_actors_at_location_on_layer,
 location_move,
-location_fix_ooBound
+location_fix_ooBound,
+LocationFullError,
+actor_delete!
 
 """
     World_GUI(world::World,canvas::GtkCanvas,saved_world::World_State,drawing_delay::Float64)
@@ -61,34 +63,19 @@ Is used for every GUI communication.
 """
 mutable struct World_GUI
     world::World
-    canvas::Gtk.GtkCanvas
-    builder::Gtk.GtkBuilder
-    window::Gtk.GtkWindow
+    window::Window
     saved_world::World_State
     drawing_delay::Float64
-    edit_mode::Symbol
-    drag_mode::Bool
-    drag_handler::Culong
-    drag_actor::Any
-    World_GUI(world,canvas,builder,window,saved_world,drawing_delay) = begin
-        new(world,canvas,builder,window,saved_world,drawing_delay,:none,false,Culong(0),nothing)
+    actor_ids::Dict{Actor,Int}
+    id_counter::Int
+    World_GUI(world,window,saved_world,drawing_delay) = begin
+        new(world,window,saved_world,drawing_delay,Dict{Actor,Int}(),0)
     end
 end
 
-"""
-    world_redraw(wo::World_GUI,no_delay::Bool=false)
-
-Redraws the world `wo`. If `no_delay` is `true` the delay controlled by `wo.drawing_delay`
-which controls the 
-"""
-function world_redraw(wo::World_GUI,no_delay::Bool=false,changes::Vector{Location}=Location[])
-    # draw(wo.canvas)
-    kara_world_draw_elements(wo,changes)
-    reveal(wo.canvas)
-    if !no_delay
-        sleep(wo.drawing_delay/1000)
-    end
-    nothing
+function get_next_id(w::World_GUI)
+    w.id_counter += 1
+    return w.id_counter
 end
 
 """
@@ -99,386 +86,533 @@ GTK window.
 """
 function World(height::Int,width::Int,name::AbstractString)
     world = World(height,width)
-    builder,window,canvas = world_init(name)
-    show(canvas)
     world_gui = World_GUI(
         world,
-        canvas,
-        builder,
-        window,
+        Window(),
         world_state_save(world),
         0,
     )
-    kara_world_draw(world_gui)
-    reveal(canvas)
-    gtk_create_callback(builder,world_gui,canvas)
+    loadGUI(world_gui)
     return world_gui
 end
 
-function gtk_create_callback(b,wo::World_GUI,canvas)
-    signal_connect(
-        wrap_slider_value_changed_callback(wo),
-        b["adj_speed"],
-        "value-changed"
-    )
-    signal_connect(
-        wrap_toolbar_btn_open_callback(wo,b),
-        b["toolbar_btn_open"],
-        "clicked"
-    )
-    signal_connect(
-        wrap_toolbar_btn_save_callback(wo,b),
-        b["toolbar_btn_save"],
-        "clicked"
-    )
-    signal_connect(
-        wrap_button_down_callback(wo,b,canvas),
-        canvas,
-        "button-press-event"
-    )
-    signal_connect(
-        wrap_button_release_callback(wo,b,canvas),
-        canvas,
-        "button-release-event"
-    )
-    # LEAVE Events apparently dont occour when added to the frame
-    # containing the canvas. Therefore the event is added directly
-    # to the canvas.
-    add_events(canvas,Gtk.GdkEventMask.LEAVE_NOTIFY)
-    signal_connect(
-        wrap_leave_canvas_callback(wo,b,canvas),
-        canvas,
-        "leave-notify-event"
-    )
-    signal_connect(
-        wrap_button_edit_tree(wo,b),
-        b["edit_btn_tree"],
-        "clicked"
-    )
-    signal_connect(
-        wrap_button_edit_mushroom(wo,b),
-        b["edit_btn_mushroom"],
-        "clicked"
-    )
-    signal_connect(
-        wrap_button_edit_leaf(wo,b),
-        b["edit_btn_leaf"],
-        "clicked"
-    )
-    signal_connect(
-        wrap_button_edit_kara(wo,b),
-        b["edit_btn_kara"],
-        "clicked"
-    )
-    signal_connect(
-        wrap_key_press(wo,b),
-        b["win_main"],
-        "key-release-event"
-    )
+function reloadGUI(wo::World_GUI)
+    wo.window = Window()
+    loadGUI(wo)
+    drawActors(wo)
+    return wo
 end
 
-function wrap_key_press(wo::World_GUI,b)
-    ctxid = Gtk.context_id(b["statusbar"], "JuliaKara")
-    function(widget,key)
-        if key.keyval == Gtk.GdkKeySyms.Escape
-            push!(b["statusbar"],ctxid,"")
-            wo.edit_mode = :none
-        end
-    end
-end
-
-function wrap_slider_value_changed_callback(wo::World_GUI)
-    function(widget)
-        wo.drawing_delay = get_gtk_property(widget,:value,Float64)
-    end
-end
-
-function wrap_toolbar_btn_open_callback(wo::World_GUI,b)
-    function(widget)
-        path = open_dialog("Pick a World-File", b["win_main"], ("*.world",))
-        if path != ""
-            wo.world = JuliaKara_noGUI.load_world(path)
-            wo.saved_world = world_state_save(wo.world)
-            world_redraw(wo,true)
-        end
-    end
-end
-
-function wrap_toolbar_btn_save_callback(wo::World_GUI,b)
-    function(widget)
-        path = save_dialog("Save as ...", b["win_main"], ("*.world",))
-        if path != ""
-            save_world(
-                wo,
-                path
-            )
-        end
-    end
-end
-
-function wrap_button_down_callback(wo::World_GUI,b,canvas)
-    ctxid = Gtk.context_id(b["statusbar"], "JuliaKara")
-    function (widget,event)
-        if wo.edit_mode==:none
-            x,y = JuliaKara_Base_GUI.grid_coordinate_virt(
-                grid_generate(wo),
-                event.x,event.y
-            )
-            actors_at_field = JuliaKara_noGUI.ActorsWorld.get_actors_at_location(
-                wo.world,
-                JuliaKara_noGUI.Location(x,y)
-            )
-            if length(actors_at_field) > 0
-                wo.drag_handler = signal_connect(
-                    wrap_actor_drag(wo,actors_at_field[1],b),
-                    canvas,
-                    "motion-notify-event"
-                )
-                wo.drag_mode = true
-                wo.drag_actor = actors_at_field[1]
-            end
-            return nothing
-        end
-    end
-end
-
-function wrap_actor_drag(wo::World_GUI,ac::JuliaKara_noGUI.Actor,b)
-    function(widget,event)
-        ctx = getgc(wo.canvas)
-        gr = grid_generate(wo)
-        x,y = JuliaKara_Base_GUI.grid_coordinate_virt(
-            gr,
-            event.x,event.y
-        )
-        if JuliaKara_noGUI.location_within_world(wo.world,JuliaKara_noGUI.Location(x,y))
-            world_redraw(wo,true)
-            if ac.actor_definition == JuliaKara_noGUI.ACTOR_DEFINITIONS[:kara]
-                image_name = :kara
-            elseif ac.actor_definition == JuliaKara_noGUI.ACTOR_DEFINITIONS[:mushroom]
-                image_name = :mushroom
-            elseif ac.actor_definition == JuliaKara_noGUI.ACTOR_DEFINITIONS[:tree]
-                image_name = :tree
-            elseif ac.actor_definition == JuliaKara_noGUI.ACTOR_DEFINITIONS[:leaf]
-                image_name = :leaf
-            else
-                error("Missing actor definition, cant draw shape.")
-            end
-            symbol_image(gr,ctx,
-                         x,
-                         y,
-                         orientation_to_rad(ac.orientation)-π/2,
-                         image_name
-                         )
-            reveal(widget)
-        end
-    end
-end
-
-function wrap_leave_canvas_callback(wo::World_GUI,b,canvas)
-    function (widget,event)
-        if wo.drag_mode
-            signal_handler_disconnect(
-                canvas,
-                wo.drag_handler
-            )
-            wo.drag_handler = Culong(0)
-            wo.drag_mode = false
-            world_redraw(wo)
-        end
-    end
-end
-
-function wrap_button_release_callback(wo::World_GUI,b,canvas)
-    ctxid = Gtk.context_id(b["statusbar"], "JuliaKara")
-    function(widget,event)
-        if wo.edit_mode != :none
-            try
-                x,y = JuliaKara_Base_GUI.grid_coordinate_virt(
-                    grid_generate(wo),
-                    event.x,event.y
-                )
-                actors_at_field = JuliaKara_noGUI.ActorsWorld.get_actors_at_location(
-                    wo.world,
-                    JuliaKara_noGUI.Location(x,y)
-                )
-                # In case one of the acors at x,y is of the same type as the editing
-                # type, delete it. Else just proceed
-                for ac in actors_at_field
-                    if ac.actor_definition == JuliaKara_noGUI.ACTOR_DEFINITIONS[wo.edit_mode]
-                        JuliaKara_noGUI.ActorsWorld.actor_delete!(
-                            wo.world,
-                            ac
-                        )
-                        world_redraw(wo,true)
-                        return nothing
-                    end
-                end
-                JuliaKara_noGUI.actor_create!(
-                    wo.world,
-                    JuliaKara_noGUI.ACTOR_DEFINITIONS[wo.edit_mode],
-                    JuliaKara_noGUI.Location(x,y),
-                    JuliaKara_noGUI.Orientation(
-                        JuliaKara_noGUI.ActorsWorld.DIRECTIONS[1]
-                    )
-                )
-                world_redraw(wo,true)
-            catch e
-                # Only catch known errors
-                if !(e == JuliaKara_noGUI.LocationFullError() || e == JuliaKara_noGUI.LocationOutsideError())
-                    throw(e)
-                end    
-            end
-            return nothing
-        elseif wo.drag_mode
-            try
-                signal_handler_disconnect(
-                    canvas,
-                    wo.drag_handler
-                )
-                wo.drag_handler = Culong(0)
-                wo.drag_mode = false
-
-                x,y = JuliaKara_Base_GUI.grid_coordinate_virt(
-                    grid_generate(wo),
-                    event.x,event.y
-                )
-                actors_at_field = JuliaKara_noGUI.ActorsWorld.get_actors_at_location(
-                    wo.world,
-                    JuliaKara_noGUI.Location(x,y)
-                )
-
-                JuliaKara_noGUI.actor_moveto!(
-                    wo.world,
-                    wo.drag_actor,
-                    JuliaKara_noGUI.Location(
-                        x,y
-                    )
-                )
-            catch e
-                # Only catch known errors
-                if !(e == JuliaKara_noGUI.LocationFullError() || e == JuliaKara_noGUI.LocationOutsideError())
-                    throw(e)
-                end
-            end
-
-            world_redraw(wo,true)
-        end
-        nothing
-    end
-end
-
-function wrap_button_edit_tree(wo::World_GUI,b)
-    ctxid = Gtk.context_id(b["statusbar"], "JuliaKara")
-    function (widget)
-        push!(b["statusbar"],ctxid,"[Edit] Tree. <ESC> to leave.")
-        wo.edit_mode = :tree
-    end
-end
-
-function wrap_button_edit_mushroom(wo::World_GUI,b)
-    ctxid = Gtk.context_id(b["statusbar"], "JuliaKara")
-    function (widget)
-        push!(b["statusbar"],ctxid,"[Edit] Mushroom. <ESC> to leave.")
-        wo.edit_mode = :mushroom
-    end
-end
-
-function wrap_button_edit_leaf(wo::World_GUI,b)
-    ctxid = Gtk.context_id(b["statusbar"], "JuliaKara")
-    function (widget)
-        push!(b["statusbar"],ctxid,"[Edit] Leaf. <ESC> to leave.")
-        wo.edit_mode = :leaf
-    end
-end
-
-function wrap_button_edit_kara(wo::World_GUI,b)
-    ctxid = Gtk.context_id(b["statusbar"], "JuliaKara")
-    function (widget)
-        wo.edit_mode = :kara
-        push!(b["statusbar"],ctxid,"[Edit] Kara. <ESC> to leave.")
-    end
-end
-
-function grid_generate(wo::World_GUI)
-    # Calculate grid size to ensure that every field is quadratic
-    #
-    # Available dimensions:
-    avail_w = width(wo.canvas)-20
-    avail_h = height(wo.canvas)-20
-    # Needed dimensions
-    needed_cell_width = avail_w/wo.world.size.width
-    needed_cell_height = avail_h/wo.world.size.height
-    # Decisive dimension
-    needed_cell_dim = min(needed_cell_width,needed_cell_height)
-    # Grid height and width
-    grid_width = needed_cell_dim * wo.world.size.width
-    grid_height = needed_cell_dim * wo.world.size.height
-    # Grid coordinates
-    grid_x = (width(wo.canvas)-grid_width)/2
-    grid_y = (height(wo.canvas)-grid_height)/2
-    # Construct grid
-    JuliaKara_Base_GUI.Grid(grid_x,
-                       grid_y,
-                       grid_width,
-                       grid_height,
-                       wo.world.size.width,
-                       wo.world.size.height
-                       )
-end
-
-function kara_world_draw_elements(wo::World_GUI,changes::Vector{Location}=Location[])
-    ctx = getgc(wo.canvas)
-    gr = grid_generate(wo)
-    # Get Actors
-    # Sort by layer
-    # first and thus are displayed on the bottom layer
-    acs = sort(wo.world.actors,by=a->a.actor_definition.layer)
-    # Rebuild entire scene if no changes were given
-    # Else only clear given fields and filter actors by location
-    if length(changes) == 0
-        # Draw Background
-        set_source_rgb(ctx,0.85,0.85,0.85)
-        paint(ctx)
-        # Draw Grid
-        set_source_rgb(ctx,1,1,1) # Black
-        grid_draw(gr,ctx)
-    else
-        for l in changes
-            cover_field(gr,ctx,l.x,l.y)
-        end
-        # Filter in case changes was given
-        filter!(x->x.location in changes,acs)
-    end
-
-    for ac in acs
-        # Dont draw the actor if it is currently draged
-        if wo.drag_mode && wo.drag_actor === ac
-            continue
-        end
+function drawActors(wo::World_GUI)
+    @js_ wo.window world.imgs = []
+    for ac in wo.world.actors
         if ac.actor_definition == JuliaKara_noGUI.ACTOR_DEFINITIONS[:kara]
-            image_name = :kara
+            draw_kara(wo,ac)
         elseif ac.actor_definition == JuliaKara_noGUI.ACTOR_DEFINITIONS[:mushroom]
-            image_name = :mushroom
+            draw_mushroom(wo,ac)
         elseif ac.actor_definition == JuliaKara_noGUI.ACTOR_DEFINITIONS[:tree]
-            image_name = :tree
+            draw_tree(wo,ac)
         elseif ac.actor_definition == JuliaKara_noGUI.ACTOR_DEFINITIONS[:leaf]
-            image_name = :leaf
+            draw_leaf(wo,ac)
         else
             error("Missing actor definition, cant draw shape.")
         end
-        symbol_image(gr,ctx,
-                     ac.location.x,
-                     ac.location.y,
-                     orientation_to_rad(ac.orientation)-π/2,
-                     image_name
-                     )
     end
 end
 
-function kara_world_draw(wo::World_GUI)
-    @guarded draw(wo.canvas) do widget
-        kara_world_draw_elements(wo)
+function loadGUI(world_gui::World_GUI)
+    window = world_gui.window
+    wait_until_defined(window,:Blink)
+    # Load Vue
+    load!(window,"https://cdn.jsdelivr.net/npm/vue/dist/vue.js",async=false)
+    wait_until_defined(window,:Vue)
+    # Load Resources
+    joinpath(@__DIR__,"res/icons/bugnorth.png")
+    Blink.resource(joinpath(@__DIR__,"..","res/icons/bugnorth.png"))
+    Blink.resource(joinpath(@__DIR__,"..","res/icons/object_tree.png"))
+    Blink.resource(joinpath(@__DIR__,"..","res/icons/object_leaf.png"))
+    Blink.resource(joinpath(@__DIR__,"..","res/icons/object_mushroom.png"))
+    Blink.resource(joinpath(@__DIR__,"..","res/icons/trashcanbig.png"))
+    # Load body
+    body!(window,read(joinpath(@__DIR__,"..","res/main.html"),String),async=false)
+    wait_until_defined(window,:grid)
+    @js window grid.draw()
+    @js window grid.draw()
+    blink_set_Grid!(world_gui)
+    # Register handles
+    handle(drop_actor_wrapper(world_gui),window,"drop_actor")
+    handle(delete_actor_wrapper(world_gui),window,"delete_actor")
+    handle(create_actor_wrapper(world_gui),window,"create_actor")
+    handle(change_delay_wrapper(world_gui),window,"change_speed")
+end
+
+function change_delay_wrapper(world::World_GUI)
+    return function (args)
+        speed = parse(Int,args)
+        world.drawing_delay = 2.0-(2.0/100.0*speed)
     end
+end
+
+function create_actor_wrapper(world::World_GUI)
+    return function (args)
+        typeof = args["type"]
+        x = args["x"]
+        y = args["y"]
+
+        create_funs = [
+            (x,y) -> place_kara(world,x,y,:NORTH)
+            (x,y) -> place_tree(world,x,y)
+            (x,y) -> place_mushroom(world,x,y)
+            (x,y) -> place_leaf(world,x,y)
+        ]
+        try
+            ac = create_funs[typeof](x,y)
+        catch e
+            if !isa(e,LocationFullError)
+                throw(e)
+            end
+        end
+    end
+end
+
+function delete_actor_wrapper(world::World_GUI)
+    return function (args)
+        id = parse(Int,args["id"])
+        for a in world.world.actors
+            if world.actor_ids[a] == id
+                js_remove_actor(world,a)
+                delete!(world.actor_ids,a)
+                actor_delete!(world.world,a)
+                return
+            end
+        end
+        @error "Actor with $id not found!"
+    end
+end
+function drop_actor_wrapper(world::World_GUI)
+    return function (args)
+        id = parse(Int,args["id"])
+        x = args["x"]
+        y = args["y"]
+        for a in world.world.actors
+            if world.actor_ids[a] == id
+                try
+                    JuliaKara_noGUI.actor_moveto!(
+                        world.world,
+                        a,
+                        JuliaKara_noGUI.Location(
+                            x,y
+                        )
+                    )
+                    js_update_actor(world,a)
+                catch e
+                    if !isa(e,LocationFullError)
+                        throw(e)
+                    end
+                end
+                return
+            end
+        end
+        @error "Actor with $id not found!"
+    end
+end
+
+function js_isdefined(d::Dict{String,Any})
+    length(d) > 0
+end
+
+function js_isdefined(d::AbstractString)
+    d != "undefined"
+end
+
+function wait_until_defined(w::Window,var::Symbol)
+    for i in 1:100
+        res = @js w typeof($var)
+        if js_isdefined(res)
+            return
+        else
+            sleep(0.1)
+        end
+    end
+    @error "Error after loading $var. It is still not defined."
+end
+
+function blink_set_Grid!(w::World_GUI)
+    width = w.world.size.width
+    height = w.world.size.height
+    r = @js w.window grid.rows = $width
+    h = @js w.window grid.cols = $width
+end
+
+# function gtk_create_callback(b,wo::World_GUI,canvas)
+#     signal_connect(
+#         wrap_slider_value_changed_callback(wo),
+#         b["adj_speed"],
+#         "value-changed"
+#     )
+#     signal_connect(
+#         wrap_toolbar_btn_open_callback(wo,b),
+#         b["toolbar_btn_open"],
+#         "clicked"
+#     )
+#     signal_connect(
+#         wrap_toolbar_btn_save_callback(wo,b),
+#         b["toolbar_btn_save"],
+#         "clicked"
+#     )
+#     signal_connect(
+#         wrap_button_down_callback(wo,b,canvas),
+#         canvas,
+#         "button-press-event"
+#     )
+#     signal_connect(
+#         wrap_button_release_callback(wo,b,canvas),
+#         canvas,
+#         "button-release-event"
+#     )
+#     # LEAVE Events apparently dont occour when added to the frame
+#     # containing the canvas. Therefore the event is added directly
+#     # to the canvas.
+#     add_events(canvas,Gtk.GdkEventMask.LEAVE_NOTIFY)
+#     signal_connect(
+#         wrap_leave_canvas_callback(wo,b,canvas),
+#         canvas,
+#         "leave-notify-event"
+#     )
+#     signal_connect(
+#         wrap_button_edit_tree(wo,b),
+#         b["edit_btn_tree"],
+#         "clicked"
+#     )
+#     signal_connect(
+#         wrap_button_edit_mushroom(wo,b),
+#         b["edit_btn_mushroom"],
+#         "clicked"
+#     )
+#     signal_connect(
+#         wrap_button_edit_leaf(wo,b),
+#         b["edit_btn_leaf"],
+#         "clicked"
+#     )
+#     signal_connect(
+#         wrap_button_edit_kara(wo,b),
+#         b["edit_btn_kara"],
+#         "clicked"
+#     )
+#     signal_connect(
+#         wrap_key_press(wo,b),
+#         b["win_main"],
+#         "key-release-event"
+#     )
+# end
+
+# function wrap_key_press(wo::World_GUI,b)
+#     ctxid = Gtk.context_id(b["statusbar"], "JuliaKara")
+#     function(widget,key)
+#         if key.keyval == Gtk.GdkKeySyms.Escape
+#             push!(b["statusbar"],ctxid,"")
+#             wo.edit_mode = :none
+#         end
+#     end
+# end
+
+# function wrap_slider_value_changed_callback(wo::World_GUI)
+#     function(widget)
+#         wo.drawing_delay = get_gtk_property(widget,:value,Float64)
+#     end
+# end
+
+# function wrap_toolbar_btn_open_callback(wo::World_GUI,b)
+#     function(widget)
+#         path = open_dialog("Pick a World-File", b["win_main"], ("*.world",))
+#         if path != ""
+#             wo.world = JuliaKara_noGUI.load_world(path)
+#             wo.saved_world = world_state_save(wo.world)
+#             world_redraw(wo,true)
+#         end
+#     end
+# end
+
+# function wrap_toolbar_btn_save_callback(wo::World_GUI,b)
+#     function(widget)
+#         path = save_dialog("Save as ...", b["win_main"], ("*.world",))
+#         if path != ""
+#             save_world(
+#                 wo,
+#                 path
+#             )
+#         end
+#     end
+# end
+
+# function wrap_button_down_callback(wo::World_GUI,b,canvas)
+#     ctxid = Gtk.context_id(b["statusbar"], "JuliaKara")
+#     function (widget,event)
+#         if wo.edit_mode==:none
+#             x,y = JuliaKara_Base_GUI.grid_coordinate_virt(
+#                 grid_generate(wo),
+#                 event.x,event.y
+#             )
+#             actors_at_field = JuliaKara_noGUI.ActorsWorld.get_actors_at_location(
+#                 wo.world,
+#                 JuliaKara_noGUI.Location(x,y)
+#             )
+#             if length(actors_at_field) > 0
+#                 wo.drag_handler = signal_connect(
+#                     wrap_actor_drag(wo,actors_at_field[1],b),
+#                     canvas,
+#                     "motion-notify-event"
+#                 )
+#                 wo.drag_mode = true
+#                 wo.drag_actor = actors_at_field[1]
+#             end
+#             return nothing
+#         end
+#     end
+# end
+
+# function wrap_actor_drag(wo::World_GUI,ac::JuliaKara_noGUI.Actor,b)
+#     function(widget,event)
+#         ctx = getgc(wo.canvas)
+#         gr = grid_generate(wo)
+#         x,y = JuliaKara_Base_GUI.grid_coordinate_virt(
+#             gr,
+#             event.x,event.y
+#         )
+#         if JuliaKara_noGUI.location_within_world(wo.world,JuliaKara_noGUI.Location(x,y))
+#             world_redraw(wo,true)
+#             if ac.actor_definition == JuliaKara_noGUI.ACTOR_DEFINITIONS[:kara]
+#                 image_name = :kara
+#             elseif ac.actor_definition == JuliaKara_noGUI.ACTOR_DEFINITIONS[:mushroom]
+#                 image_name = :mushroom
+#             elseif ac.actor_definition == JuliaKara_noGUI.ACTOR_DEFINITIONS[:tree]
+#                 image_name = :tree
+#             elseif ac.actor_definition == JuliaKara_noGUI.ACTOR_DEFINITIONS[:leaf]
+#                 image_name = :leaf
+#             else
+#                 error("Missing actor definition, cant draw shape.")
+#             end
+#             symbol_image(gr,ctx,
+#                          x,
+#                          y,
+#                          orientation_to_rad(ac.orientation)-π/2,
+#                          image_name
+#                          )
+#             reveal(widget)
+#         end
+#     end
+# end
+
+# function wrap_leave_canvas_callback(wo::World_GUI,b,canvas)
+#     function (widget,event)
+#         if wo.drag_mode
+#             signal_handler_disconnect(
+#                 canvas,
+#                 wo.drag_handler
+#             )
+#             wo.drag_handler = Culong(0)
+#             wo.drag_mode = false
+#             world_redraw(wo)
+#         end
+#     end
+# end
+
+# function wrap_button_release_callback(wo::World_GUI,b,canvas)
+#     ctxid = Gtk.context_id(b["statusbar"], "JuliaKara")
+#     function(widget,event)
+#         if wo.edit_mode != :none
+#             try
+#                 x,y = JuliaKara_Base_GUI.grid_coordinate_virt(
+#                     grid_generate(wo),
+#                     event.x,event.y
+#                 )
+#                 actors_at_field = JuliaKara_noGUI.ActorsWorld.get_actors_at_location(
+#                     wo.world,
+#                     JuliaKara_noGUI.Location(x,y)
+#                 )
+#                 # In case one of the acors at x,y is of the same type as the editing
+#                 # type, delete it. Else just proceed
+#                 for ac in actors_at_field
+#                     if ac.actor_definition == JuliaKara_noGUI.ACTOR_DEFINITIONS[wo.edit_mode]
+#                         JuliaKara_noGUI.ActorsWorld.actor_delete!(
+#                             wo.world,
+#                             ac
+#                         )
+#                         world_redraw(wo,true)
+#                         return nothing
+#                     end
+#                 end
+#                 JuliaKara_noGUI.actor_create!(
+#                     wo.world,
+#                     JuliaKara_noGUI.ACTOR_DEFINITIONS[wo.edit_mode],
+#                     JuliaKara_noGUI.Location(x,y),
+#                     JuliaKara_noGUI.Orientation(
+#                         JuliaKara_noGUI.ActorsWorld.DIRECTIONS[1]
+#                     )
+#                 )
+#                 world_redraw(wo,true)
+#             catch e
+#                 # Only catch known errors
+#                 if !(e == JuliaKara_noGUI.LocationFullError() || e == JuliaKara_noGUI.LocationOutsideError())
+#                     throw(e)
+#                 end    
+#             end
+#             return nothing
+#         elseif wo.drag_mode
+#             try
+#                 signal_handler_disconnect(
+#                     canvas,
+#                     wo.drag_handler
+#                 )
+#                 wo.drag_handler = Culong(0)
+#                 wo.drag_mode = false
+
+#                 x,y = JuliaKara_Base_GUI.grid_coordinate_virt(
+#                     grid_generate(wo),
+#                     event.x,event.y
+#                 )
+#                 actors_at_field = JuliaKara_noGUI.ActorsWorld.get_actors_at_location(
+#                     wo.world,
+#                     JuliaKara_noGUI.Location(x,y)
+#                 )
+
+#                 JuliaKara_noGUI.actor_moveto!(
+#                     wo.world,
+#                     wo.drag_actor,
+#                     JuliaKara_noGUI.Location(
+#                         x,y
+#                     )
+#                 )
+#             Catch e
+#                 # Only catch known errors
+#                 if !(e == JuliaKara_noGUI.LocationFullError() || e == JuliaKara_noGUI.LocationOutsideError())
+#                     throw(e)
+#                 end
+#             end
+
+#             world_redraw(wo,true)
+#         end
+#         nothing
+#     end
+# end
+
+# function wrap_button_edit_tree(wo::World_GUI,b)
+#     ctxid = Gtk.context_id(b["statusbar"], "JuliaKara")
+#     function (widget)
+#         push!(b["statusbar"],ctxid,"[Edit] Tree. <ESC> to leave.")
+#         wo.edit_mode = :tree
+#     end
+# end
+
+# function wrap_button_edit_mushroom(wo::World_GUI,b)
+#     ctxid = Gtk.context_id(b["statusbar"], "JuliaKara")
+#     function (widget)
+#         push!(b["statusbar"],ctxid,"[Edit] Mushroom. <ESC> to leave.")
+#         wo.edit_mode = :mushroom
+#     end
+# end
+
+# function wrap_button_edit_leaf(wo::World_GUI,b)
+#     ctxid = Gtk.context_id(b["statusbar"], "JuliaKara")
+#     function (widget)
+#         push!(b["statusbar"],ctxid,"[Edit] Leaf. <ESC> to leave.")
+#         wo.edit_mode = :leaf
+#     end
+# end
+
+# function wrap_button_edit_kara(wo::World_GUI,b)
+#     ctxid = Gtk.context_id(b["statusbar"], "JuliaKara")
+#     function (widget)
+#         wo.edit_mode = :kara
+#         push!(b["statusbar"],ctxid,"[Edit] Kara. <ESC> to leave.")
+#     end
+# end
+
+# function grid_generate(wo::World_GUI)
+#     # Calculate grid size to ensure that every field is quadratic
+#     #
+#     # Available dimensions:
+#     avail_w = width(wo.canvas)-20
+#     avail_h = height(wo.canvas)-20
+#     # Needed dimensions
+#     needed_cell_width = avail_w/wo.world.size.width
+#     needed_cell_height = avail_h/wo.world.size.height
+#     # Decisive dimension
+#     needed_cell_dim = min(needed_cell_width,needed_cell_height)
+#     # Grid height and width
+#     grid_width = needed_cell_dim * wo.world.size.width
+#     grid_height = needed_cell_dim * wo.world.size.height
+#     # Grid coordinates
+#     grid_x = (width(wo.canvas)-grid_width)/2
+#     grid_y = (height(wo.canvas)-grid_height)/2
+#     # Construct grid
+#     JuliaKara_Base_GUI.Grid(grid_x,
+#                        grid_y,
+#                        grid_width,
+#                        grid_height,
+#                        wo.world.size.width,
+#                        wo.world.size.height
+#                        )
+# end
+
+# function kara_world_draw_elements(wo::World_GUI,changes::Vector{Location}=Location[])
+#     ctx = getgc(wo.canvas)
+#     gr = grid_generate(wo)
+#     # Get Actors
+#     # Sort by layer
+#     # first and thus are displayed on the bottom layer
+#     acs = sort(wo.world.actors,by=a->a.actor_definition.layer)
+#     # Rebuild entire scene if no changes were given
+#     # Else only clear given fields and filter actors by location
+#     if length(changes) == 0
+#         # Draw Background
+#         set_source_rgb(ctx,0.85,0.85,0.85)
+#         paint(ctx)
+#         # Draw Grid
+#         set_source_rgb(ctx,1,1,1) # Black
+#         grid_draw(gr,ctx)
+#     else
+#         for l in changes
+#             cover_field(gr,ctx,l.x,l.y)
+#         end
+#         # Filter in case changes was given
+#         filter!(x->x.location in changes,acs)
+#     end
+
+#     for ac in acs
+#         # Dont draw the actor if it is currently draged
+#         if wo.drag_mode && wo.drag_actor === ac
+#             continue
+#         end
+#         if ac.actor_definition == JuliaKara_noGUI.ACTOR_DEFINITIONS[:kara]
+#             image_name = :kara
+#         elseif ac.actor_definition == JuliaKara_noGUI.ACTOR_DEFINITIONS[:mushroom]
+#             image_name = :mushroom
+#         elseif ac.actor_definition == JuliaKara_noGUI.ACTOR_DEFINITIONS[:tree]
+#             image_name = :tree
+#         elseif ac.actor_definition == JuliaKara_noGUI.ACTOR_DEFINITIONS[:leaf]
+#             image_name = :leaf
+#         else
+#             error("Missing actor definition, cant draw shape.")
+#         end
+#         symbol_image(gr,ctx,
+#                      ac.location.x,
+#                      ac.location.y,
+#                      orientation_to_rad(ac.orientation)-π/2,
+#                      image_name
+#                      )
+#     end
+# end
+
+# function kara_world_draw(wo::World_GUI)
+#     @guarded draw(wo.canvas) do widget
+#         kara_world_draw_elements(wo)
+#     end
+# end
+
+
+function to_js_direction(direction::Symbol)
+    return findfirst(x->x==direction,JuliaKara_noGUI.ActorsWorld.DIRECTIONS)
 end
 
 """
@@ -492,8 +626,17 @@ This function is a wrapper around [`JuliaKara_noGUI.place_kara`](@ref) to suppor
 """
 function place_kara(wo::World_GUI,x::Int,y::Int,direction::Symbol=JuliaKara_noGUI.ActorsWorld.DIRECTIONS[1])
     ac = place_kara(wo.world,x,y,direction)
-    world_redraw(wo,true,[ac.location])
+    draw_kara(wo,ac)
     return ac
+end
+
+function draw_kara(wo::World_GUI,ac::Actor)
+    newid = get_next_id(wo)
+    wo.actor_ids[ac] = newid
+    jsdir = to_js_direction(ac.orientation.value)
+    x = ac.location.x
+    y = ac.location.y
+    @js_ wo.window world.place($newid,$x,$y,$jsdir,"bugnorth.png",$(ac.actor_definition.layer))
 end
 
 """
@@ -506,8 +649,16 @@ This function is a wrapper around [`JuliaKara_noGUI.place_tree`](@ref) to suppor
 """
 function place_tree(wo::World_GUI,x::Int,y::Int)
     ac = place_tree(wo.world,x,y)
-    world_redraw(wo,true,[ac.location])
+    draw_tree(wo,ac)
     return ac
+end
+
+function draw_tree(wo::World_GUI,ac::Actor)
+    newid = get_next_id(wo)
+    wo.actor_ids[ac] = newid
+    x = ac.location.x
+    y = ac.location.y
+    @js_ wo.window world.place($newid,$x,$y,1,"object_tree.png",$(ac.actor_definition.layer))
 end
 
 """
@@ -520,8 +671,16 @@ This function is a wrapper around [`JuliaKara_noGUI.place_leaf`](@ref) to suppor
 """
 function place_leaf(wo::World_GUI,x::Int,y::Int)
     ac = place_leaf(wo.world,x,y)
-    world_redraw(wo,true,[ac.location])
+    draw_leaf(wo,ac)
     return ac
+end
+
+function draw_leaf(wo::World_GUI,ac::Actor)
+    newid = get_next_id(wo)
+    wo.actor_ids[ac] = newid
+    x = ac.location.x
+    y = ac.location.y
+    @js_ wo.window world.place($newid,$x,$y,1,"object_leaf.png",$(ac.actor_definition.layer))
 end
 
 """
@@ -534,8 +693,30 @@ This function is a wrapper around [`JuliaKara_noGUI.place_mushroom`](@ref) to su
 """
 function place_mushroom(wo::World_GUI,x::Int,y::Int)
     ac = place_mushroom(wo.world,x,y)
-    world_redraw(wo,true,[ac.location])
+    draw_mushroom(wo,ac)
     return ac
+end
+
+function draw_mushroom(wo::World_GUI,ac::Actor)
+    newid = get_next_id(wo)
+    wo.actor_ids[ac] = newid
+    x = ac.location.x
+    y = ac.location.y
+    @js_ wo.window world.place($newid,$x,$y,1,"object_mushroom.png",$(ac.actor_definition.layer))
+end
+
+function js_update_actor(wo::World_GUI,ac::Actor)
+    @js_ wo.window world.update_actor($(wo.actor_ids[ac]),$(ac.location.x),$(ac.location.y),$(to_js_direction(ac.orientation.value)))
+end
+
+function js_remove_actor(wo::World_GUI,ac::Actor)
+    @js_ wo.window world.remove_actor($(wo.actor_ids[ac]))
+end
+
+function delay(wo::World_GUI)
+    if wo.drawing_delay > 0
+        sleep(wo.drawing_delay)
+    end
 end
 
 """
@@ -554,26 +735,11 @@ function move(wo::World_GUI,ac::Actor)
         front_lo,
         ac.actor_definition.layer
     )
-    if length(actors_in_front) == 0
-        new_lo = front_lo
-        new_lo = location_fix_ooBound(wo.world,new_lo)
-        changes = Location[
-            ac.location,
-            new_lo
-        ]
-    else
-        changes = Location[]
-        sizehint!(changes,4)
-        push!(changes,ac.location)
-        for i in 1:3
-            new_lo = location_move(changes[i],ac.orientation)
-            new_lo = location_fix_ooBound(wo.world,new_lo)
-            push!(changes,new_lo)
-        end
-    end
     move(wo.world,ac)
-
-    world_redraw(wo,false,changes)
+    js_update_actor(wo,ac)
+    js_update_actor.(Ref(wo),actors_in_front)
+    delay(wo)
+    return nothing
 end
 
 """
@@ -585,7 +751,8 @@ This function is a wrapper around [`JuliaKara_noGUI.turnLeft`](@ref) to support 
 """
 function turnLeft(wo::World_GUI,ac::Actor)
     turnLeft(wo.world,ac)
-    world_redraw(wo,false,[ac.location])
+    js_update_actor(wo,ac)
+    delay(wo)
 end
 
 """
@@ -597,7 +764,8 @@ This function is a wrapper around [`JuliaKara_noGUI.turnRight`](@ref) to support
 """
 function turnRight(wo::World_GUI,ac::Actor)
     turnRight(wo.world,ac)
-    world_redraw(wo,false,[ac.location])
+    js_update_actor(wo,ac)
+    delay(wo)
 end
 
 """
@@ -608,8 +776,14 @@ Removes an actor of type leaf from the location `ac` is at.
 This function is a wrapper around [`JuliaKara_noGUI.removeLeaf`](@ref) to support GUI.
 """
 function removeLeaf(wo::World_GUI,ac::Actor)
+    layer = JuliaKara_noGUI.ACTOR_DEFINITIONS[:leaf].layer
+    leaf = get_actors_at_location_on_layer(wo.world,ac.location,layer)
+    if length(leaf) > 0
+        js_remove_actor(wo,leaf[1])
+        delete!(wo.actor_ids,leaf[1])
+    end
     removeLeaf(wo.world,ac)
-    world_redraw(wo,false,[ac.location])
+    delay(wo)
 end
 
 """
@@ -620,8 +794,8 @@ Places an actor of type leaf the location `ac` is at.
 This function is a wrapper around [`JuliaKara_noGUI.putLeaf`](@ref) to support GUI.
 """
 function putLeaf(wo::World_GUI,ac::Actor)
-    putLeaf(wo.world,ac)
-    world_redraw(wo,false,[ac.location])
+    place_leaf(wo,ac.location.x,ac.location.y)
+    delay(wo)
 end
 
 """
@@ -791,7 +965,7 @@ function load_world(path::AbstractString,name::AbstractString)
     wo = World(loaded_wo.size.width,loaded_wo.size.height,name)
     wo.world = loaded_wo
     wo.saved_world = world_state_save(wo.world)
-    world_redraw(wo,true)
+    drawActors(wo)
     return wo
 end
 
@@ -825,7 +999,7 @@ end
 
 function reset!(wo::World_GUI,wst::World_State)
     reset!(wo.world,wst)
-    world_redraw(wo,true)
+    drawActors(wo)
     nothing
 end
 
