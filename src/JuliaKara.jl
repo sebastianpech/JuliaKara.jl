@@ -125,7 +125,7 @@ function loadGUI(world_gui::World_GUI)
     window = world_gui.window
     wait_until_defined(window,:Blink)
     # Load Vue
-    load!(window,"https://cdn.jsdelivr.net/npm/vue/dist/vue.js",async=false)
+    load!(window,joinpath(@__DIR__,"..","res/js/vue.js"),async=false)
     wait_until_defined(window,:Vue)
     # Load Resources
     joinpath(@__DIR__,"res/icons/bugnorth.png")
