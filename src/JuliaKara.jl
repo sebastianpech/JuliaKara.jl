@@ -139,9 +139,9 @@ function loadGUI(world_gui::World_GUI)
     # Load body
     body!(window,read(joinpath(@__DIR__,"..","res/main.html"),String),async=false)
     wait_until_defined(window,:grid)
-    @js window grid.draw()
-    @js window grid.draw()
     blink_set_Grid!(world_gui)
+    @js window grid.draw()
+    @js window grid.draw()
     # Register handles
     handle(drop_actor_wrapper(world_gui),window,"drop_actor")
     handle(delete_actor_wrapper(world_gui),window,"delete_actor")
@@ -291,7 +291,7 @@ end
 function blink_set_Grid!(w::World_GUI)
     width = w.world.size.width
     height = w.world.size.height
-    r = @js w.window grid.rows = $width
+    r = @js w.window grid.rows = $height
     h = @js w.window grid.cols = $width
 end
 
