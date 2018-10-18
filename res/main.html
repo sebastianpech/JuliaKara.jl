@@ -46,6 +46,7 @@
       position:relative;
       width:100%;
       padding:10px;
+      vertical-align:middle;
   }
   #menu-h img:hover {
       cursor:pointer
@@ -80,16 +81,30 @@
       background: #0c5400;
       cursor: pointer;
   }
-
+  .btn {
+      border: 1px solid grey;
+      padding: 1px;
+  }
+  .btn-drag {
+      border: 1px solid grey;
+      padding: 1px;
+  }
+  .btn-drop {
+      padding: 1px;
+      border: 1px solid grey;
+  }
 </style>
 <div id="main-window">
   <div class="tablerow">
     <div id="menu-h" style="border-bottom:1px solid #0c5400">
-      <img src="bugnorth.png" ondragstart="world.drag_create_new(1)">
-      <img src="object_tree.png" ondragstart="world.drag_create_new(2)">
-      <img src="object_mushroom.png" ondragstart="world.drag_create_new(3)">
-      <img src="object_leaf.png" ondragstart="world.drag_create_new(4)">
-      <img src="trashcanbig.png" style="display:inline;float:right" ondragover="world.allowDrop(event)" ondrop="world.deleteActor(event)">
+      <img src="save.png" width="25" height="25" class="btn" onclick="world.save()">
+      <img src="load.png" width="25" height="25" class="btn" onclick="world.load()">
+      &nbsp;
+      <img src="bugnorth.png" ondragstart="world.drag_create_new(1)" width="25" height="25" class="btn-drag">
+      <img src="object_tree.png" ondragstart="world.drag_create_new(2)" width="25" height="25" class="btn-drag">
+      <img src="object_mushroom.png" ondragstart="world.drag_create_new(3)" width="25" height="25" class="btn-drag">
+      <img src="object_leaf.png" ondragstart="world.drag_create_new(4)" width="25" height="25" class="btn-drag">
+      <img src="trashcanbig.png" style="display:inline;float:right" ondragover="world.allowDrop(event)" ondrop="world.deleteActor(event)" width="25" height="25" class="btn-drop">
     </div>
   </div>
   <div class="tablerow">
@@ -199,8 +214,13 @@
               this.current_drag = ev.target.getAttribute("actor_id")
               this.create_new_type=0
           },
+          save : function () {
+              Blink.msg("save",{})
+          },
+          load : function () {
+              Blink.msg("load",{})
+          },
           deleteActor : function (ev) {
-              ev.preventDefault();
               if (this.current_drag != 0){
                   Blink.msg("delete_actor",{id : this.current_drag})
               }
@@ -219,10 +239,6 @@
               this.current_drag=0
               this.create_new_type=0
           }
-          // sendMessage: function () {
-          //     this.message = this.message + "\n\n" + this.message_inp
-          //      Blink.msg("press",this.message_inp)
-          // }
       }
   })
   var grid = new Vue({

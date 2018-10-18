@@ -129,6 +129,8 @@ function loadGUI(world_gui::World_GUI)
     wait_until_defined(window,:Vue)
     # Load Resources
     joinpath(@__DIR__,"res/icons/bugnorth.png")
+    Blink.resource(joinpath(@__DIR__,"..","res/icons/load.png"))
+    Blink.resource(joinpath(@__DIR__,"..","res/icons/save.png"))
     Blink.resource(joinpath(@__DIR__,"..","res/icons/bugnorth.png"))
     Blink.resource(joinpath(@__DIR__,"..","res/icons/object_tree.png"))
     Blink.resource(joinpath(@__DIR__,"..","res/icons/object_leaf.png"))
@@ -145,6 +147,8 @@ function loadGUI(world_gui::World_GUI)
     handle(delete_actor_wrapper(world_gui),window,"delete_actor")
     handle(create_actor_wrapper(world_gui),window,"create_actor")
     handle(change_delay_wrapper(world_gui),window,"change_speed")
+    handle(load_world_wrapper(world_gui),window,"load")
+    handle(save_world_wrapper(world_gui),window,"save")
 end
 
 function change_delay_wrapper(world::World_GUI)
@@ -190,6 +194,7 @@ function delete_actor_wrapper(world::World_GUI)
         @error "Actor with $id not found!"
     end
 end
+
 function drop_actor_wrapper(world::World_GUI)
     return function (args)
         id = parse(Int,args["id"])
@@ -215,6 +220,51 @@ function drop_actor_wrapper(world::World_GUI)
             end
         end
         @error "Actor with $id not found!"
+    end
+end
+
+function load_world_wrapper(wo::World_GUI)
+    return function(args)
+       path = js(wo.window.shell, Blink.js"""
+       var electron = require('electron');
+       electron.dialog.showOpenDialog(
+        {
+            title: "Open Kara world-file",
+            properties: ['openFile'],
+            filters: [
+                       {name: 'world-file', extensions: ['world',]},
+                     ]
+
+        })
+       """)
+        # path = open_dialog("Pick a World-File", b["win_main"], ("*.world",))
+        if path != nothing
+            wo.world = JuliaKara_noGUI.load_world(path[1])
+            wo.saved_world = world_state_save(wo.world)
+            drawActors(wo)
+        end
+    end
+end
+
+function save_world_wrapper(wo::World_GUI)
+    return function(args)
+       path = js(wo.window.shell, Blink.js"""
+       var electron = require('electron');
+       electron.dialog.showSaveDialog(
+        {
+            title: "Save Kara world-file",
+            filters: [
+                       {name: 'World-File', extensions: ['world',]},
+                     ]
+
+        })
+       """)
+        if path != nothing
+            save_world(
+                wo,
+                path
+            )
+        end
     end
 end
 
