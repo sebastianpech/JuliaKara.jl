@@ -242,6 +242,7 @@ function load_world_wrapper(wo::World_GUI)
             wo.world = JuliaKara_noGUI.load_world(path[1])
             wo.saved_world = world_state_save(wo.world)
             drawActors(wo)
+            blink_set_Grid!(wo)
         end
     end
 end
@@ -291,8 +292,8 @@ end
 function blink_set_Grid!(w::World_GUI)
     width = w.world.size.width
     height = w.world.size.height
-    r = @js w.window grid.rows = $height
-    h = @js w.window grid.cols = $width
+    r = @js_ w.window grid.rows = $height
+    h = @js_ w.window grid.cols = $width
 end
 
 function to_js_direction(direction::Symbol)
@@ -649,6 +650,7 @@ function load_world(path::AbstractString,name::AbstractString)
     wo = World(loaded_wo.size.width,loaded_wo.size.height,name)
     wo.world = loaded_wo
     wo.saved_world = world_state_save(wo.world)
+    blink_set_Grid!(wo)
     drawActors(wo)
     return wo
 end
