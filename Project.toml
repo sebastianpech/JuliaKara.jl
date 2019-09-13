@@ -1,7 +1,7 @@
 name = "JuliaKara"
 uuid = "cb449176-cfc4-11e8-17cc-2f37f3db5949"
 authors = ["Sebastian Pech <sebastian.pech@me.com>"]
-version = "0.1.0"
+version = "0.2.0"
 
 [deps]
 Blink = "ad839575-38b3-5650-b840-f874b8c74a25"
